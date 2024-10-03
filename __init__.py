@@ -16,30 +16,33 @@ bl_info = {
 
 import bpy
 
-from . LAZY_BoneManager import LAZY_BoneManager
-
-class LazyTailorPanel(bpy.types.Panel):
-    bl_label = "BG3 Lazy Tailor"
-    bl_idname = "POSE_PT_LazyTailor"
-    bl_category = "LazyTailor"
+class LazyTailorPanelMain(bpy.types.Panel):
+    bl_label = "BG3 Lazy Talior"
+    bl_idname = "OBJECT_PT_lazytalior"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_context = "posemode"
-
+    bl_category = "Lazy Talior"
     def draw(self, context):
         layout = self.layout
-        layout.operator("view3d.LAZY_BoneManager")
+
+        obj = context.object
+
+        row = layout.row()
+        row.label(text="Hello world!", icon='WORLD_DATA')
+
+        row = layout.row()
+        row.label(text="Active object is: " + obj.name)
+        row = layout.row()
+        row.prop(obj, "name")
+
+        row = layout.row()
+        row.operator("mesh.primitive_cube_add")
 
 def register():
-    bpy.utils.register_class(LazyTailorPanel)
-    bpy.utils.register_class(LAZY_BoneManager)
-
+    bpy.utils.register_class(LazyTailorPanelMain)
 
 def unregister():
-    bpy.utils.unregister_class(LazyTailorPanel)
-    bpy.utils.unregister_class(LAZY_BoneManager)
-
+    bpy.utils.unregister_class(LazyTailorPanelMain)
 
 if __name__ == "__main__":
     register()
-
