@@ -1,4 +1,12 @@
 import bpy
+
+from bpy.props import (StringProperty,
+                       BoolProperty,
+                       IntProperty,
+                       FloatProperty,
+                       PointerProperty)
+
+from bpy.types import PropertyGroup
         
 def ChildSetInverter(TargetBone):
     ob = bpy.context.active_object
@@ -19,3 +27,14 @@ def ShowMeYourBones(TargetSkel, ColName):
         print("CHIDREN INVERTED")
     
     CB.is_visible = False
+
+
+class LT_PG_settings(PropertyGroup):
+    
+        Targ_A: PointerProperty(
+        type=bpy.types.Object, 
+        name="Target A", 
+        description="Select target A", 
+        options={'ANIMATABLE'}, 
+        update=None
+        )

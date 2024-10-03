@@ -1,4 +1,6 @@
 import bpy
+from bpy.props import PointerProperty, CollectionProperty
+from . Skeleton_Manager import *
 
 bl_info = {
         "name": "BG3 Lazy Tailor",
@@ -14,7 +16,6 @@ bl_info = {
         "category": "3D View"
         }
 
-import bpy
 
 class LazyTailorPanelMain(bpy.types.Panel):
     bl_label = "BG3 Lazy Talior"
@@ -22,11 +23,13 @@ class LazyTailorPanelMain(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Lazy Talior"
+
+    
     def draw(self, context):
         layout = self.layout
 
         obj = context.object
-
+        
         row = layout.row()
         row.label(text="Hello world!", icon='WORLD_DATA')
 
@@ -40,9 +43,11 @@ class LazyTailorPanelMain(bpy.types.Panel):
 
 def register():
     bpy.utils.register_class(LazyTailorPanelMain)
+    bpy.utils.register_class(LT_PG_settings)
 
 def unregister():
     bpy.utils.unregister_class(LazyTailorPanelMain)
+    bpy.utils.unregister_class(LT_PG_settings)
 
 if __name__ == "__main__":
     register()
