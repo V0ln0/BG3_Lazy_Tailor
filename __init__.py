@@ -1,5 +1,4 @@
 import bpy
-from bpy.props import PointerProperty, CollectionProperty
 from . Skeleton_Manager import *
 
 bl_info = {
@@ -15,6 +14,11 @@ bl_info = {
         "support": "COMMUNITY",
         "category": "3D View"
         }
+
+
+
+
+
 
 
 class LazyTailorPanelMain(bpy.types.Panel):
@@ -43,11 +47,10 @@ class LazyTailorPanelMain(bpy.types.Panel):
 
 def register():
     bpy.utils.register_class(LazyTailorPanelMain)
-    bpy.utils.register_class(LT_PG_settings)
+
 
 def unregister():
     bpy.utils.unregister_class(LazyTailorPanelMain)
-    bpy.utils.unregister_class(LT_PG_settings)
 
 if __name__ == "__main__":
     register()

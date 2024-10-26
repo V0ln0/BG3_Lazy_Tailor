@@ -1,15 +1,36 @@
-# import bpy
-# import os
 
-# from os import path
+# THIS SHIT IS FOR GETTING ASSTES INTO THE FILE
 
-# #gets the absolute path to the asset blend file
-# # LazyAssetPath = os.path.join(path.dirname(__file__), os.pardir, "LazyTalior_Assets.blend")
+import bpy
+import os
+from os import path
 
-# # #Name of Armature data blocks to be imported
-# # #"Target_B" does not have its own data, will be created on init
-# # Mannequins = ("Target_A", "DGB_M", "DGB_F", "DWR_M", "DWR_F", "HUM_M", "HUM_F", "HUM_MS", "HUM_FS", "GNO+HFL_M", "GNO+HFL_f")
+#gets the absolute path to the asset blend file
+LazyAssetPath = os.path.join(path.dirname(__file__), os.pardir, "LazyTalior_Assets.blend")
 
-# # def SkeletonsOnParade(mainstret, members):
-# #     bpy.ops.wm.append(filepath='LazyAssetPath', filename='LazyTalior_Assets.blend' check_existing=True,) 
-# # # class LinkFittingArmatures(bpy.types.Panel):
+
+# we're just gonna grab all armature objects via the master collection 'Lazy Tailor Assets' because its the path of least resitance
+# work smart not hard. That said this might not be working smart lol
+# Bone shapes getting draged in is annoying, fix later.
+def LT_Append(AppendType, AppendName):
+
+    bpy.ops.wm.append(
+        filepath=os.path.join(LazyAssetPath, AppendType, AppendName),
+        directory=os.path.join(LazyAssetPath, AppendType),
+        filename=AppendName,
+        do_reuse_local_id=True,
+        set_fake=True
+        )
+def LT_LinkActions():
+    with bpy.data.libraries.load(LazyAssetPath, assets_only=True) as (data_from, data_to):
+        data_to.actions = data_from.actions
+
+# custom porp on action to link?
+def LT_LinkRefs():
+   bpy.ops.wm.link(
+        filepath=os.path.join(LazyAssetPath, AppendType, AppendName),
+        directory=os.path.join(LazyAssetPath, AppendType),
+        filename=AppendName,
+        do_reuse_local_id=True,
+        instance_collections=True
+        )
