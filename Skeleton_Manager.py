@@ -1,22 +1,12 @@
+# this is for swapping around what body we're fitting too
 # collections_all does not exist in prior to 4.1, will need to make a patch for earlior verions
 
 import bpy
-
-
-from bpy.props import (StringProperty,
-                       BoolProperty,
-                       IntProperty,
-                       FloatProperty,
-                       PointerProperty)
-
-from bpy.types import PropertyGroup
-
 
 # finds bones with the 'child of' constraint, treats them all as active, then runs 'set inverse' on all of them
 # this is needed because swapping Target_B's data requires those conrstaints to be reset
 
 def Childof_SawpManager(TargetBone):
-    ob = bpy.context.active_object
     for b in TargetBone.pose.bones:
         for c in b.constraints:
             if c.type == "CHILD_OF":
@@ -40,12 +30,28 @@ def BoneColVisCheck(TargetSkel, ColName):
     CB.is_visible = False
 
 
-class LT_PG_settings(PropertyGroup):
+
+
+class LT_OT_set_rest_pose(bpy.types.Operator):
     
-        Targ_A: PointerProperty(
-        type=bpy.types.Object, 
-        name="Target A", 
-        description="Select target A", 
-        options={'ANIMATABLE'}, 
-        update=None
-        )
+    bl_idname = "lt.set_rest_pose"
+    bl_label = "Set New Rest Pose"
+    bl_description = "Sets the current pose of the active armature as its new Rest Pose AKA 'defualt postion'."
+
+
+    #  sets the current postion of bones as the new rest pose 
+    #  used for changing what the starting body type is
+
+    def execute(self, context):
+        current_mode = bpy.context.object.mode
+        ACT_OB = bpy.context.active_object
+        
+        if ACT_OB.name == ("Mannequin_BT1") and current_mode == "POSE":
+            bpy.ops.pose.armature_apply(selected=False)
+        
+        return {'FINISHED'}
+
+
+
+
+        
