@@ -4,62 +4,32 @@ import bpy
 import os
 from os import path
 
-
-
-# class LT_Closet_Tools:
-
-
-
-
-
-class LT_OT_asset_grab(bpy.types.Operator):
+class LT_OT_initialise(bpy.types.Operator):
 
     bl_idname = "lt.asset_grab"
     bl_label = "Asset Grabber"
     bl_description = "Imports assets needed by the addon into your current Blend file. You only need to run this once."
 
-    #gets the absolute path to the asset blend file
-    LazyAssetPath = os.path.join(path.dirname(__file__), os.pardir, "LazyTalior_Assets.blend")
+# this file used to be so much longer....
+# anyway, this function links all the needed armatures + actions into the current Blend file via an instanced collection + loads the actions required
+# couldn't do it all at once because the link function wasn't playing nice with Actions, those have to use libraries.load
+# this keeps the whole file much cleaner, but in order for the user to actualy use the data a new object has to be created in the scnene using the linked data
+# will sort out later
 
-
-    # we're just gonna grab all armature objects via the master collection 'Lazy Tailor Assets' because its the path of least resitance
-    # work smart not hard. That said this might not be working smart lol
-    # Bone shapes getting draged in is annoying, fix later.
-    def LT_Append(AppendType, AppendName):
-
-        bpy.ops.wm.append(
-            filepath=os.path.join(LazyAssetPath, AppendType, AppendName),
-            directory=os.path.join(LazyAssetPath, AppendType),
-            filename=AppendName,
-            do_reuse_local_id=True,
-            set_fake=True
-            )
-
-    def LT_LinkActions():
-        with bpy.data.libraries.load(LazyAssetPath, assets_only=True) as (data_from, data_to):
-            data_to.actions = data_from.actions
-
-    # custom porp on action to link?
-    def LT_LinkRefs(LinkType, LinkName):
+    def execute(self, context):
+        LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "LazyTalior_Assets.blend")
+        LinkType = 'Collection'
+        LinkName = 'Lazy Tailor Assets'
         bpy.ops.wm.link(
-                filepath=os.path.join(LazyAssetPath, LinkType, LinkName),
-                directory=os.path.join(LazyAssetPath, LinkType),
+                filepath=os.path.join(LT_LibPath, LinkType, LinkName),
+                directory=os.path.join(LT_LibPath, LinkType),
                 filename=LinkName,
                 do_reuse_local_id=True,
                 instance_collections=True
                 )
-    
-    def execute(self, context):
-        AssetType = 'Collection'
-        scene = bpy.context.scene
-        
-        LT_Append(AssetType, 'Lazy Tailor Assets')
-        LT_LinkActions()
-        LT_LinkRefs(AssetType, 'LT_DontTouchIsBones')
-        
-        # also not thinking smart... too bad!
-        for BS in scene.objects:
-            if BS.startswith('LT_BS_'):
-                bpy.ops.object.delete()
+        with bpy.data.libraries.load(LT_LibPath) as (data_from, data_to):
+            data_to.actions = data_from.actions
         
         return {'FINISHED'}
+
+

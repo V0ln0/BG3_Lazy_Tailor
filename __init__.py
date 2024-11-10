@@ -50,16 +50,26 @@ class LT_OT_LazyPanelMain(bpy.types.Panel):
         self.layout.operator('lt.set_rest_pose')
 
 
-def register():
-    bpy.utils.register_class(LT_OT_LazyPanelMain)
-    bpy.utils.register_class(LT_OT_set_rest_pose)
-    bpy.utils.register_class(LT_OT_asset_grab)
 
 
-def unregister():
-    bpy.utils.unregister_class(LT_OT_LazyPanelMain)
-    bpy.utils.unregister_class(LT_OT_set_rest_pose)
-    bpy.utils.unregister_class(LT_OT_asset_grab)
+
+# def register():
+#     bpy.utils.register_class(LT_OT_LazyPanelMain)
+#     bpy.utils.register_class(LT_OT_set_rest_pose)
+#     bpy.utils.register_class(LT_OT_asset_grab)
+
+
+# def unregister():
+#     bpy.utils.unregister_class(LT_OT_LazyPanelMain)
+#     bpy.utils.unregister_class(LT_OT_set_rest_pose)
+#     bpy.utils.unregister_class(LT_OT_asset_grab)
+
+classes = (LT_OT_LazyPanelMain, LT_OT_set_rest_pose, LT_OT_asset_grab)
+
+register, unregister = bpy.utils.register_classes_factory(classes)
 
 if __name__ == "__main__":
     register()
+
+
+
