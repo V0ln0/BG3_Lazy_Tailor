@@ -17,8 +17,10 @@ Created by Volno
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-
+# Warning: this is both my first Blender addon and my first 'big' project in Python
+# also I am dyslexic, typos abound
 import bpy
+
 from . Skeleton_Manager import *
 from . Skeleton_Closet import *
 
@@ -46,27 +48,27 @@ class LT_OT_LazyPanelMain(bpy.types.Panel):
 
     
     def draw(self, context):
-        self.layout.operator('lt.asset_grab')
+        self.layout.operator('lt.initialise')
         self.layout.operator('lt.set_rest_pose')
 
 
 
 
 
-# def register():
-#     bpy.utils.register_class(LT_OT_LazyPanelMain)
-#     bpy.utils.register_class(LT_OT_set_rest_pose)
-#     bpy.utils.register_class(LT_OT_asset_grab)
+def register():
+    bpy.utils.register_class(LT_OT_LazyPanelMain)
+    bpy.utils.register_class(LT_OT_set_rest_pose)
+    bpy.utils.register_class(LT_OT_initialise)
 
 
-# def unregister():
-#     bpy.utils.unregister_class(LT_OT_LazyPanelMain)
-#     bpy.utils.unregister_class(LT_OT_set_rest_pose)
-#     bpy.utils.unregister_class(LT_OT_asset_grab)
+def unregister():
+    bpy.utils.unregister_class(LT_OT_LazyPanelMain)
+    bpy.utils.unregister_class(LT_OT_set_rest_pose)
+    bpy.utils.unregister_class(LT_OT_initialise)
 
-classes = (LT_OT_LazyPanelMain, LT_OT_set_rest_pose, LT_OT_asset_grab)
+# classes = (LT_OT_LazyPanelMain, LT_OT_set_rest_pose, LT_OT_initialise)
 
-register, unregister = bpy.utils.register_classes_factory(classes)
+# register, unregister = bpy.utils.register_classes_factory(classes)
 
 if __name__ == "__main__":
     register()
