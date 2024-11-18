@@ -14,20 +14,6 @@ LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor\Li
 # as in moved out of the insanced folder, and added to the current scene
 
 
-# todo: this could be cleaned up, but its fine for now
-def LT_LoadCol(ColName):
-    
-    bpy.ops.wm.link(
-        filepath=os.path.join(LT_LibPath, 'Collection', ColName),
-        directory=os.path.join(LT_LibPath, 'Collection'),
-        filename=ColName,
-        do_reuse_local_id=True,
-        instance_collections=True
-        )
-    # links actions, done this way because using the Link function was not playing nice with actions.
-    with bpy.data.libraries.load(LT_LibPath) as (data_from, data_to):
-        data_to.actions = data_from.actions
-
 
 
 # sets the conrtoll bones in the Mannequin to visable and hides the deform bones.
@@ -39,12 +25,12 @@ def LT_ArmColVis(ArmName):
 
 # checks for a collection, if it exists it returns the collection name. 
 # if it dosen't exist, it creates a new collection with the desried name and returns the new collection
-def LT_ensure_collection(collection_name) -> bpy.types.Collection:
+def LT_ensure_collection(Cname) -> bpy.types.Collection:
    scene = bpy.context.scene
    try:
-       link_to = scene.collection.children[collection_name]
+       link_to = scene.collection.children[Cname]
    except KeyError:
-       link_to = bpy.data.collections.new(collection_name)
+       link_to = bpy.data.collections.new(Cname)
        scene.collection.children.link(link_to)
    return link_to.name
 
@@ -53,21 +39,35 @@ def LT_ensure_collection(collection_name) -> bpy.types.Collection:
 def LT_AssetDrop(AssetName):
     bpy.ops.object.add_named(name=AssetName)
 
+# todo: this could be cleaned up, but its fine for now
+def LT_LoadCol(AssetCol):
+    bpy.ops.wm.link(
+        filepath=os.path.join(LT_LibPath, 'Collection', AssetCol),
+        directory=os.path.join(LT_LibPath, 'Collection'),
+        filename=AssetCol,
+        do_reuse_local_id=True,
+        instance_collections=True
+        )
+    bpy.data.objects[AssetCol].hide_viewport = True
+    with bpy.data.libraries.load(LT_LibPath) as (data_from, data_to):
+        data_to.actions = data_from.actions
+
+
 def LT_MannequinInit():
-    view_layer = bpy.context.view_layer
-    ColName = LT_ensure_collection('Lazy_Tailor_Mannequins')
+    
+    EnsuredCol = LT_ensure_collection('Lazy_Tailor_Mannequins')
     LT_LoadCol('LT_DontTouchIsBones')
     # bpy.data.collections[ColName].objects.link(bpy.data.objects["Lazy_Tailor_Assets"]) todo: come back to this later, we'll leave it where it is for now.
     Mannequins = []
     for M in bpy.data.objects:
         if M.name == 'LT_Mannequin' or M.name == 'LT_Mannequin_Base':
-            bpy.data.collections[ColName].objects.link(M)
+            bpy.data.collections[EnsuredCol].objects.link(M)
             Mannequins.append(M)
             M.select_set(True)
         else:
             M.select_set(False)
 
-    view_layer.objects.active = Mannequins[0]
+    bpy.context.view_layer.objects.active = Mannequins[0]
     bpy.ops.object.make_local(type='SELECT_OBJECT')
 
 
@@ -81,7 +81,6 @@ class LT_OT_initialise(bpy.types.Operator):
 
     def execute(self, context):
 
-        
         LT_MannequinInit()
         return {'FINISHED'}
 

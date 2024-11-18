@@ -39,9 +39,9 @@ bl_info = {
         }
 
 
-class LT_OT_LazyPanelMain(bpy.types.Panel):
+class LT_PT_LazyPanelMain(bpy.types.Panel):
     bl_label = "BG3 Lazy Talior"
-    bl_idname = "lt.lazy_panel_main"
+    bl_idname = "LT_PT_LazyPanelMain"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Lazy Talior"
@@ -59,17 +59,17 @@ class LT_OT_LazyPanelMain(bpy.types.Panel):
 
 
 # def register():
-#     bpy.utils.register_class(LT_OT_LazyPanelMain)
+#     bpy.utils.register_class(LT_PT_LazyPanelMain)
 #     bpy.utils.register_class(LT_OT_set_rest_pose)
 #     bpy.utils.register_class(LT_OT_initialise)
 
 
 # def unregister():
-#     bpy.utils.unregister_class(LT_OT_LazyPanelMain)
+#     bpy.utils.unregister_class(LT_PT_LazyPanelMain)
 #     bpy.utils.unregister_class(LT_OT_set_rest_pose)
 #     bpy.utils.unregister_class(LT_OT_initialise)
 
-classes = (LT_OT_LazyPanelMain, LT_OT_set_rest_pose, LT_OT_initialise, LT_OT_swap_body_type)
+classes = (LT_PT_LazyPanelMain, LT_OT_set_rest_pose, LT_OT_initialise, LT_OT_swap_body_type)
 
 register, unregister = bpy.utils.register_classes_factory(classes)
 
