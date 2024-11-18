@@ -29,8 +29,22 @@ def LT_Childof_Validator(TargetSkel, ColName):
     
     CB.is_visible = False
 
+def LT_BaseRemap(OldBody, NewBody):
+
+    bpy.data.armatures["OldBody"].user_remap(bpy.data.armatures["NewBody"])
 
 
+class LT_OT_swap_body_type(bpy.types.Operator):
+    bl_idname = "lt.swap_body_type"
+    bl_label = "Swap Body Type"
+    bl_description = "Swaps the Body Type That You Are Fitting too"
+
+    def execute(self, context):
+        TestBodyA = 'LT_Mannequin_Base'
+        TestBodyB = 'LT_S_GNO_F'
+        LT_BaseRemap(TestBodyA, TestBodyB)
+
+        return {'FINISHED'}
 
 class LT_OT_set_rest_pose(bpy.types.Operator):
     

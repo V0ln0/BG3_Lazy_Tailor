@@ -29,7 +29,7 @@ bl_info = {
         "description": "A tool aimed at making the proccsess of refiting outfits for various races/bodytypes for use in Baldur's Gate 3 easier.",
         "author": "Volno",
         "version": (1, 0, 0),
-        "blender": (4, 2, 2),
+        "blender": (4, 2, 3),
         "location": "Pose Mode > Sidebar > BG3LazyTailor Tools tab",
         "warning": "baby's first Blender addon",
         "wiki_url": "",
@@ -46,29 +46,32 @@ class LT_OT_LazyPanelMain(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_category = "Lazy Talior"
 
+
     
     def draw(self, context):
+        # todo: bool that stops people from pressing this more than once. it is fine for now
         self.layout.operator('lt.initialise')
+        self.layout.operator('lt.swap_body_type')
         self.layout.operator('lt.set_rest_pose')
 
 
 
 
 
-def register():
-    bpy.utils.register_class(LT_OT_LazyPanelMain)
-    bpy.utils.register_class(LT_OT_set_rest_pose)
-    bpy.utils.register_class(LT_OT_initialise)
+# def register():
+#     bpy.utils.register_class(LT_OT_LazyPanelMain)
+#     bpy.utils.register_class(LT_OT_set_rest_pose)
+#     bpy.utils.register_class(LT_OT_initialise)
 
 
-def unregister():
-    bpy.utils.unregister_class(LT_OT_LazyPanelMain)
-    bpy.utils.unregister_class(LT_OT_set_rest_pose)
-    bpy.utils.unregister_class(LT_OT_initialise)
+# def unregister():
+#     bpy.utils.unregister_class(LT_OT_LazyPanelMain)
+#     bpy.utils.unregister_class(LT_OT_set_rest_pose)
+#     bpy.utils.unregister_class(LT_OT_initialise)
 
-# classes = (LT_OT_LazyPanelMain, LT_OT_set_rest_pose, LT_OT_initialise)
+classes = (LT_OT_LazyPanelMain, LT_OT_set_rest_pose, LT_OT_initialise, LT_OT_swap_body_type)
 
-# register, unregister = bpy.utils.register_classes_factory(classes)
+register, unregister = bpy.utils.register_classes_factory(classes)
 
 if __name__ == "__main__":
     register()
