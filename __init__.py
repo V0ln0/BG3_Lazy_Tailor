@@ -17,7 +17,8 @@ Created by Volno
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-# Warning: this is both my first Blender addon and my first 'big' project in Python
+
+# Warning: this is both my first Blender addon and my first "big" project in Python
 # also I am dyslexic, typos abound
 import bpy
 
@@ -42,32 +43,17 @@ bl_info = {
 class LT_PT_LazyPanelMain(bpy.types.Panel):
     bl_label = "BG3 Lazy Talior"
     bl_idname = "LT_PT_LazyPanelMain"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
     bl_category = "Lazy Talior"
 
-
-    
     def draw(self, context):
         # todo: bool that stops people from pressing this more than once. it is fine for now
-        self.layout.operator('lt.initialise')
-        self.layout.operator('lt.swap_body_type')
-        self.layout.operator('lt.set_rest_pose')
+        self.layout.operator("lt.initialise")
+        self.layout.operator("lt.swap_body_type")
+        self.layout.operator("lt.set_rest_pose")
 
 
-
-
-
-# def register():
-#     bpy.utils.register_class(LT_PT_LazyPanelMain)
-#     bpy.utils.register_class(LT_OT_set_rest_pose)
-#     bpy.utils.register_class(LT_OT_initialise)
-
-
-# def unregister():
-#     bpy.utils.unregister_class(LT_PT_LazyPanelMain)
-#     bpy.utils.unregister_class(LT_OT_set_rest_pose)
-#     bpy.utils.unregister_class(LT_OT_initialise)
 
 classes = (LT_PT_LazyPanelMain, LT_OT_set_rest_pose, LT_OT_initialise, LT_OT_swap_body_type)
 

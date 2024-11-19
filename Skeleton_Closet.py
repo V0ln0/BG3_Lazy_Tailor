@@ -9,19 +9,10 @@ LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor\Li
 
 # this file used to be so much longer....
 # anyway, these functions load the needed armatures + actions into the current Blend file via an instanced collection + loads the actions required
-# couldn't do it all at once because the link function wasn't playing nice with Actions, those have to use libraries.load
+# couldn"t do it all at once because the link function wasn't playing nice with Actions, those have to use libraries.load
 # this keeps the whole file much cleaner, but in order for the user to actualy use the anything we have linked over, it has to get "unpacked"
 # as in moved out of the insanced folder, and added to the current scene
 
-
-
-
-# sets the conrtoll bones in the Mannequin to visable and hides the deform bones.
-# hacky as all hell but this was done just so it dosen't clutter up the work space when you port it in
-def LT_ArmColVis(ArmName):
-    
-    bpy.ops.armature.collection_show_all()
-    bpy.data.armatures[ArmName].collections_all["Deform_Bones"].is_visible = False
 
 # checks for a collection, if it exists it returns the collection name. 
 # if it dosen't exist, it creates a new collection with the desried name and returns the new collection
@@ -42,8 +33,8 @@ def LT_AssetDrop(AssetName):
 # todo: this could be cleaned up, but its fine for now
 def LT_LoadCol(AssetCol):
     bpy.ops.wm.link(
-        filepath=os.path.join(LT_LibPath, 'Collection', AssetCol),
-        directory=os.path.join(LT_LibPath, 'Collection'),
+        filepath=os.path.join(LT_LibPath, "Collection", AssetCol),
+        directory=os.path.join(LT_LibPath, "Collection"),
         filename=AssetCol,
         do_reuse_local_id=True,
         instance_collections=True
@@ -55,12 +46,11 @@ def LT_LoadCol(AssetCol):
 
 def LT_MannequinInit():
     
-    EnsuredCol = LT_ensure_collection('Lazy_Tailor_Mannequins')
-    LT_LoadCol('LT_DontTouchIsBones')
-    # bpy.data.collections[ColName].objects.link(bpy.data.objects["Lazy_Tailor_Assets"]) todo: come back to this later, we'll leave it where it is for now.
+    EnsuredCol = LT_ensure_collection("Lazy_Tailor_Mannequins")
+    LT_LoadCol("LT_DontTouchIsBones")
     Mannequins = []
     for M in bpy.data.objects:
-        if M.name == 'LT_Mannequin' or M.name == 'LT_Mannequin_Base':
+        if M.name == "LT_Mannequin" or M.name == "LT_Mannequin_Base":
             bpy.data.collections[EnsuredCol].objects.link(M)
             Mannequins.append(M)
             M.select_set(True)
@@ -68,10 +58,7 @@ def LT_MannequinInit():
             M.select_set(False)
 
     bpy.context.view_layer.objects.active = Mannequins[0]
-    bpy.ops.object.make_local(type='SELECT_OBJECT')
-
-
-
+    bpy.ops.object.make_local(type="SELECT_OBJECT")
 
 class LT_OT_initialise(bpy.types.Operator):
 
@@ -82,7 +69,7 @@ class LT_OT_initialise(bpy.types.Operator):
     def execute(self, context):
 
         LT_MannequinInit()
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 # possible to do: 
 #   figure out how to add custom thumbnails to the actions
