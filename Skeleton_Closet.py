@@ -17,21 +17,26 @@ LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor\Li
 # checks for a collection, if it exists it returns the collection name. 
 # if it dosen't exist, it creates a new collection with the desried name and returns the new collection
 def LT_ensure_collection(Cname) -> bpy.types.Collection:
+  
    scene = bpy.context.scene
+   
    try:
        link_to = scene.collection.children[Cname]
    except KeyError:
        link_to = bpy.data.collections.new(Cname)
        scene.collection.children.link(link_to)
-   return link_to.name
+
+   return link_to
 
 
 # drops an object into the scene by name, works on objects inside instanced collections
 def LT_AssetDrop(AssetName):
+    
     bpy.ops.object.add_named(name=AssetName)
 
 # todo: this could be cleaned up, but its fine for now
 def LT_LoadCol(AssetCol):
+   
     bpy.ops.wm.link(
         filepath=os.path.join(LT_LibPath, "Collection", AssetCol),
         directory=os.path.join(LT_LibPath, "Collection"),
@@ -41,17 +46,20 @@ def LT_LoadCol(AssetCol):
         )
     bpy.data.objects[AssetCol].hide_viewport = True
     with bpy.data.libraries.load(LT_LibPath) as (data_from, data_to):
-        data_to.actions = data_from.actions
+        data_to.actions = data_from.actions #todo: store list of appended files to for cleaning up later
 
 
 def LT_MannequinInit():
     
-    EnsuredCol = LT_ensure_collection("Lazy_Tailor_Mannequins")
+    EnsuredCol = LT_ensure_collection("Lazy Tailor Assets")
+    view_layer = bpy.context.view_layer
+    view_layer.active_layer_collection = view_layer.layer_collection.children[EnsuredCol.name]
     LT_LoadCol("LT_DontTouchIsBones")
     Mannequins = []
+    
     for M in bpy.data.objects:
         if M.name == "LT_Mannequin" or M.name == "LT_Mannequin_Base":
-            bpy.data.collections[EnsuredCol].objects.link(M)
+            bpy.data.collections[EnsuredCol.name].objects.link(M)
             Mannequins.append(M)
             M.select_set(True)
         else:
@@ -74,3 +82,5 @@ class LT_OT_initialise(bpy.types.Operator):
 # possible to do: 
 #   figure out how to add custom thumbnails to the actions
 #   Add in a way for users to write their own actions into LazyTalior_Assets.blend? #pipedream
+#   could allow users to write their own assets into the original file or a seperate file to laod in 
+
