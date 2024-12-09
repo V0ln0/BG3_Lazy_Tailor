@@ -52,36 +52,43 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
 
     
     def draw(self, context):
+        
+        lt_props = bpy.context.scene.lt_props
+        
         layout = self.layout
         row = layout.row()
         # todo: bool that stops people from pressing this more than once. it is fine for now
-        row.label(text='hi', icon='WORLD_DATA')
-        
-        layout.operator("lt.initialise")   
+        # LableText = ("Currently converting ") + (lt_props.bc_from) + (", to ") + (lt_props.bc_to) + (".")
+        row.label(text='LableText', icon='WORLD_DATA')
+
+        if lt_props.InitBool == False:
+            layout.operator("lt.initialise",
+                text="Initialise Lazy Talior",
+                icon='RADIOBUT_OFF')
+        else:
+            layout.operator("lt.initialise",
+                text="Lazy Talior Initialised",
+                icon='RADIOBUT_ON')
+
         layout.operator("lt.swap_body_type")
-        layout.operator("lt.set_rest_pose")
-        
+
+# we're gonna have to learn how to use an enum, sorry lol
+
+
 
 classes = (
     LT_PT_LazyPanelMain,
-    LT_OT_set_rest_pose,
     LT_OT_initialise,
     LT_OT_swap_body_type,
-    LT_PropsGroup,
+    LT_Props,
     )
 
 def register():
-    # bpy.types.Scene.lt_bc_from = bpy.props.StringProperty(
-
-    # )
-    # bpy.types.Scene.lt_bc_to = bpy.props.StringProperty(
-
-    # )
 
     for _class in classes: 
         bpy.utils.register_class(_class)
     
-    bpy.types.Scene.lt_props = bpy.props.PointerProperty(type=LT_PropsGroup)
+    bpy.types.Scene.lt_props = bpy.props.PointerProperty(type=LT_Props)
 
 
 def unregister():

@@ -28,7 +28,6 @@ def LT_ensure_collection(Cname) -> bpy.types.Collection:
 
    return link_to
 
-
 # drops an object into the scene by name, works on objects inside instanced collections
 def LT_AssetDrop(AssetName):
     
@@ -67,7 +66,7 @@ def LT_MannequinInit():
 
     bpy.context.view_layer.objects.active = Mannequins[0]
     bpy.ops.object.make_local(type="SELECT_OBJECT")
-
+    
 class LT_OT_initialise(bpy.types.Operator):
 
     bl_idname = "lt.initialise"
@@ -77,6 +76,7 @@ class LT_OT_initialise(bpy.types.Operator):
     def execute(self, context):
 
         LT_MannequinInit()
+        bpy.context.scene.lt_props.InitBool = True
         return {"FINISHED"}
 
 # possible to do: 
