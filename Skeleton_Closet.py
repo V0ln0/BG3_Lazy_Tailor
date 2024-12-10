@@ -48,23 +48,25 @@ def LT_LoadCol(AssetCol):
         data_to.actions = data_from.actions #todo: store list of appended files to for cleaning up later
 
 
-def LT_MannequinInit():
+def LT_MannequinInit(mannequin_f, mannequin_b):
     
     EnsuredCol = LT_ensure_collection("Lazy Tailor Assets")
+    
     view_layer = bpy.context.view_layer
     view_layer.active_layer_collection = view_layer.layer_collection.children[EnsuredCol.name]
     LT_LoadCol("LT_DontTouchIsBones")
+    
     Mannequins = []
     
     for M in bpy.data.objects:
-        if M.name == "LT_Mannequin" or M.name == "LT_Mannequin_Base":
+        if M.name == mannequin_f or M.name == mannequin_b:
             bpy.data.collections[EnsuredCol.name].objects.link(M)
             Mannequins.append(M)
             M.select_set(True)
         else:
             M.select_set(False)
 
-    bpy.context.view_layer.objects.active = Mannequins[0]
+    view_layer.objects.active = Mannequins[0]
     bpy.ops.object.make_local(type="SELECT_OBJECT")
     
 class LT_OT_initialise(bpy.types.Operator):
@@ -72,11 +74,14 @@ class LT_OT_initialise(bpy.types.Operator):
     bl_idname = "lt.initialise"
     bl_label = "Initialise Lazy Talior"
     bl_description = "Imports assets needed by the addon into your current Blend file. You only need to run this once."
-
+    
     def execute(self, context):
 
-        LT_MannequinInit()
+        lt_props = bpy.context.scene.lt_props
+
+        LT_MannequinInit(lt_props.mannequin_form, lt_props.mannequin_base)
         bpy.context.scene.lt_props.InitBool = True
+        
         return {"FINISHED"}
 
 # possible to do: 

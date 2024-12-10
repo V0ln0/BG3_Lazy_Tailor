@@ -1,10 +1,11 @@
 import bpy
 
 class LT_Props(bpy.types.PropertyGroup):
-
-    bc_from: bpy.props.StringProperty(name='bc_from', default='LT_HUM_M') #defualt is HUM_M_BASE
-    bc_to: bpy.props.StringProperty(name='bc_to', default='NOT_SET') #defualt is GTY_M_BASE
-    InitBool: bpy.props.BoolProperty(name='InitBool', default=False)
+    mannequin_base: bpy.props.StringProperty(name="bc_from", default="LT_Mannequin_Base")
+    mannequin_form: bpy.props.StringProperty(name="bc_from", default="LT_Mannequin")
+    body_type: bpy.props.StringProperty(name="bc_from", default="LT_HUM_M") 
+    body_preset: bpy.props.StringProperty(name="bc_to", default="LT_HUM_MS_BDY") 
+    InitBool: bpy.props.BoolProperty(name="InitBool", default=False)
 
 
 
