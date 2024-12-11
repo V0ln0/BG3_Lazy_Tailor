@@ -53,7 +53,7 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
     
     def draw(self, context):
         
-        lt_props = bpy.context.scene.lt_props
+
         
         layout = self.layout
         row = layout.row()
@@ -61,6 +61,65 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
         # LableText = ("Currently converting ") + (lt_props.bc_from) + (", to ") + (lt_props.bc_to) + (".")
         row.label(text='LableText', icon='WORLD_DATA')
 
+        # props = self.layout.operator("lt.type_set", gotta figure out a better way of resetting this shit 
+        #     text='RESET'
+        #     )
+        # props.Race_Index = 0
+        # props.Skeleton_Index = 0
+        # props.Type_Index = 0
+        # props.Part_Index = 0
+        
+        props = self.layout.operator("lt.type_set",
+            text='GTY_M'
+            )
+        props.Race_Index = 5
+        props.Type_Index = 0
+        props.Part_Index = 0
+        props.Skeleton_Index = 1
+        
+        props = self.layout.operator("lt.type_set",
+            text='HUM_MS'
+            )
+        props.Race_Index = 1
+        props.Type_Index = 2
+        props.Part_Index = 0
+        props.Skeleton_Index = 3
+
+        props = self.layout.operator("lt.type_set",
+            text='DGB_M'
+            )
+        
+        props.Race_Index = 9
+        props.Type_Index = 0
+        props.Part_Index = 0
+        props.Skeleton_Index = 3
+
+        props = self.layout.operator("lt.type_set",
+            text='HUM_M TO HUM_F'
+            )
+        
+        props.Race_Index = 1
+        props.Type_Index = 0
+        props.Part_Index = 7
+        props.Skeleton_Index = 2
+
+        
+        layout.operator("lt.swap_body_type")
+
+class LT_PT_InitPanel(bpy.types.Panel):
+    
+    bl_label = "Lazy Talior Supply Closet"
+    bl_idname = "LT_PT_InitPanel"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_category = "Lazy Talior"
+
+    def draw(self, context):
+        lt_props = bpy.context.scene.lt_props
+        
+        layout = self.layout
+        
         if lt_props.InitBool == False:
             layout.operator("lt.initialise",
                 text="Initialise Lazy Talior",
@@ -70,17 +129,15 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
                 text="Lazy Talior Initialised",
                 icon='RADIOBUT_ON')
 
-        layout.operator("lt.swap_body_type")
-
-# we're gonna have to learn how to use an enum, sorry lol
-
 
 
 classes = (
     LT_PT_LazyPanelMain,
+    LT_PT_InitPanel,
     LT_OT_initialise,
     LT_OT_swap_body_type,
     LT_Props,
+    LT_OT_type_set,
     )
 
 def register():

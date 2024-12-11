@@ -67,7 +67,7 @@ def LT_MannequinInit(mannequin_f, mannequin_b):
             M.select_set(False)
 
     view_layer.objects.active = Mannequins[0]
-    bpy.ops.object.make_local(type="SELECT_OBJECT")
+    bpy.ops.object.make_local(type="SELECT_OBJECT") #armature also needs to be made local ffs
     
 class LT_OT_initialise(bpy.types.Operator):
 
