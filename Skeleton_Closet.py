@@ -4,7 +4,7 @@ import bpy
 import os
 from os import path
 
-LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor\Library\LazyTalior_Assets.blend")
+LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor\library\LazyTalior_Assets.blend")
 
 
 # this file used to be so much longer....
@@ -47,13 +47,15 @@ def LT_LoadCol(AssetCol):
     with bpy.data.libraries.load(LT_LibPath) as (data_from, data_to):
         data_to.actions = data_from.actions #todo: store list of appended files to for cleaning up later
 
+def LT_SelectMe(TheOneObj):
+    bpy.context.view_layer
 
 def LT_MannequinInit(mannequin_f, mannequin_b):
     
     EnsuredCol = LT_ensure_collection("Lazy Tailor Assets")
     
     view_layer = bpy.context.view_layer
-    view_layer.active_layer_collection = view_layer.layer_collection.children[EnsuredCol.name]
+    view_layer.active_layer_collection = view_layer.layer_collection.children[EnsuredCol.name] #easier to nest the loaded collection this way then trying to move it
     LT_LoadCol("LT_DontTouchIsBones")
     
     Mannequins = []
@@ -62,12 +64,12 @@ def LT_MannequinInit(mannequin_f, mannequin_b):
         if M.name == mannequin_f or M.name == mannequin_b:
             bpy.data.collections[EnsuredCol.name].objects.link(M)
             Mannequins.append(M)
-            M.select_set(True)
-        else:
-            M.select_set(False)
+            
+    bpy.ops.object.select_pattern(pattern=(mannequin_f + "*"), extend=False)
+    bpy.ops.object.make_local(type='SELECT_OBDATA')
+    bpy.data.armatures[mannequin_f].use_fake_user = True
+    bpy.data.armatures[mannequin_b].use_fake_user = True
 
-    view_layer.objects.active = Mannequins[0]
-    bpy.ops.object.make_local(type="SELECT_OBJECT") #armature also needs to be made local ffs
     
 class LT_OT_initialise(bpy.types.Operator):
 

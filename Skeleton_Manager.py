@@ -3,7 +3,7 @@
 
 
 import bpy
-
+import enum
 # this class controls what we're converting too
 # all current code/presets assume that you are either converting HUM_M/HUM_F to another body type.
 # to do: add a way to layer presets ontop of each other
@@ -40,19 +40,22 @@ class LT_BodyShop:
         self.Childof_MassInvert()
         CB.is_visible = False
 
-
-    def BodySwap(self):
+ 
+    def BodySwap(self, Clear: bool):
    
         bpy.data.objects[self.Base].data = bpy.data.armatures[self.BodyArm]
-        bpy.ops.pose.user_transforms_clear(only_selected=False)
+        if Clear == True:
+            bpy.ops.pose.user_transforms_clear(only_selected=False)
         self.Childof_Validator()
+        bpy.data.objects[self.Mannequin].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
         if self.PreSet.endswith("_MTF") or self.PreSet.endswith("_FTM"):
             bpy.ops.pose.armature_apply(selected=False)
-        bpy.data.objects[self.Mannequin].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
+
 
 
 # Uses the string props from LazyTalior_Prop.py as an input
 # props stored outside of the opporator so that settings like the body type and preset can be displayed in the UI
+
 class LT_OT_swap_body_type(bpy.types.Operator):
 
     bl_idname = "lt.swap_body_type"
@@ -62,9 +65,11 @@ class LT_OT_swap_body_type(bpy.types.Operator):
     def execute(self, context):
         
         lt_props = bpy.context.scene.lt_props
-        bpy.ops.object.mode_set(mode="POSE")
+        bpy.ops.object.select_pattern(pattern=(lt_props.mannequin_form), extend=False)
         bpy.context.view_layer.objects.active = bpy.data.objects[lt_props.mannequin_form]
-        
+        bpy.ops.object.mode_set(mode="POSE")
+
+
         # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
         SewingPattern = LT_BodyShop(lt_props.mannequin_base, lt_props.mannequin_form, lt_props.body_type, lt_props.body_preset)
         SewingPattern.BodySwap()
@@ -75,6 +80,30 @@ class LT_OT_swap_body_type(bpy.types.Operator):
 # Right now (v1.0.0), its a bit of an unnecessary and overengineered mess tbh 
 # but my hope is that later on it will make it easier for users to add custom content to the addon, without having to manualy edit the code
 
+# class RaceName(enum.Enum):
+#     HUM = 1
+#     ELF = 2
+#     HEL = 3
+#     TIF = 4
+#     GTY = 5
+#     DWR = 6
+#     GNO = 7
+#     HFL = 9
+#     DGB = 10
+#     HRC = 11
+
+
+# class Base_Key(enum.Enum): #some races share armatures, whats using what is defined below
+#     HUM_M = 1
+#     HUM_F = 2
+#     HUM_MS = 3
+#     HUM_FS = 4
+#     SHORT_M = 5
+#     SHORT_F = 6
+#     DWR_M = 7
+#     DWR_F = 8
+
+
 class LT_BodyDefine:
 
     def __init__(self, Race, Type, Part, Skeleton_Key):
@@ -83,6 +112,19 @@ class LT_BodyDefine:
         self.Type = Type
         self.Part = Part
         self.Skeleton_Key = Skeleton_Key
+    
+    # I actualy have no idea why I typed this out or if its even helpfull,
+    # Skeleton_Key = {
+        
+    #     Base_Key.HUM_M: ["HUM_M", "ELF_M", "HEL_M", "TIF_M", "GTY_M"],
+    #     Base_Key.HUM_F: ["HUM_F", "ELF_F", "HEL_F", "TIF_F", "GTY_F"],
+    #     Base_Key.HUM_MS: ["HUM_MS", "ELF_MS", "HEL_MS", "TIF_MS", "DGB_M", "HRC_M"], 
+    #     Base_Key.HUM_FS: ["HUM_FS", "ELF_FS", "HEL_FS", "TIF_FS", "DGB_F", "HRC_F"],
+    #     Base_Key.SHORT_M: ["GNO_M", "HFL_M"],
+    #     Base_Key.SHORT_F: ["GNO_F", "HFL_F"],
+    #     Base_Key.DWR_M: ["DWR_M"],
+    #     Base_Key.DWR_F: ["DWR_F"],
+    # }
 
     CodeBook = {
         

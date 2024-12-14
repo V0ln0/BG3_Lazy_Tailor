@@ -21,6 +21,8 @@ Created by Volno
 # Warning: this is both my first Blender addon and my first "big" project in Python
 # also I am dyslexic, typos abound
 import bpy
+import os
+import bpy.utils.previews
 
 from . Skeleton_Manager import *
 from . Skeleton_Closet import *
@@ -40,7 +42,6 @@ bl_info = {
     "category": "Meshes"
     }
 
-
 class LT_PT_LazyPanelMain(bpy.types.Panel):
     bl_label = "BG3 Lazy Talior"
     bl_idname = "LT_PT_LazyPanelMain"
@@ -50,16 +51,16 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
     bl_category = "Lazy Talior"
 
 
-    
     def draw(self, context):
-        
 
-        
         layout = self.layout
+        pcoll = preview_collections["main"]
+
         row = layout.row()
+        my_icon = pcoll["my_icon"]
         # todo: bool that stops people from pressing this more than once. it is fine for now
         # LableText = ("Currently converting ") + (lt_props.bc_from) + (", to ") + (lt_props.bc_to) + (".")
-        row.label(text='LableText', icon='WORLD_DATA')
+        row.label(text='they really just let you put anything here huh', icon_value=my_icon.icon_id)
 
         # props = self.layout.operator("lt.type_set", gotta figure out a better way of resetting this shit 
         #     text='RESET'
@@ -85,7 +86,7 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
         props.Part_Index = 0
         props.Skeleton_Index = 3
 
-        props = self.layout.operator("lt.type_set",
+        props = self.layout.operator("lt.type_set", #preset needs fixing
             text='DGB_M'
             )
         
@@ -94,7 +95,7 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
         props.Part_Index = 0
         props.Skeleton_Index = 3
 
-        props = self.layout.operator("lt.type_set",
+        props = self.layout.operator("lt.type_set", 
             text='HUM_M TO HUM_F'
             )
         
@@ -129,7 +130,19 @@ class LT_PT_InitPanel(bpy.types.Panel):
                 text="Lazy Talior Initialised",
                 icon='RADIOBUT_ON')
 
+def LT_IconFactory(RegBool: bool):
+    
+    if RegBool == True:
+        pcoll = bpy.utils.previews.new()
+        my_icons_dir = os.path.join(os.path.dirname(__file__), "icons")
+        pcoll.load("my_icon", os.path.join(my_icons_dir, "icon-image.png"), 'IMAGE')
+        preview_collections["main"] = pcoll
+    else:
+        for pcoll in preview_collections.values():
+            bpy.utils.previews.remove(pcoll)
+        preview_collections.clear()
 
+preview_collections = {}
 
 classes = (
     LT_PT_LazyPanelMain,
@@ -142,6 +155,7 @@ classes = (
 
 def register():
 
+    LT_IconFactory(RegBool=True)
     for _class in classes: 
         bpy.utils.register_class(_class)
     
@@ -149,6 +163,9 @@ def register():
 
 
 def unregister():
+
+    LT_IconFactory(RegBool=False)
+
     del bpy.types.Scene.lt_props
     for _class in classes: 
         bpy.utils.unregister_class(_class)  
