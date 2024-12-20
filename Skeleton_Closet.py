@@ -17,16 +17,18 @@ LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor\li
 # checks for a collection, if it exists it returns the collection name. 
 # if it dosen't exist, it creates a new collection with the desried name and returns the new collection
 def LT_ensure_collection(Cname) -> bpy.types.Collection:
-  
-   scene = bpy.context.scene
-   
-   try:
-       link_to = scene.collection.children[Cname]
-   except KeyError:
-       link_to = bpy.data.collections.new(Cname)
-       scene.collection.children.link(link_to)
 
-   return link_to
+    scene = bpy.context.scene
+
+    try:
+        link_to = scene.collection.children[Cname]
+        bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[link_to.name]
+    except KeyError:
+        link_to = bpy.data.collections.new(Cname)
+        scene.collection.children.link(link_to)
+        bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[link_to.name]
+
+    return link_to
 
 # drops an object into the scene by name, works on objects inside instanced collections
 def LT_AssetDrop(AssetName):
@@ -47,30 +49,26 @@ def LT_LoadCol(AssetCol):
     with bpy.data.libraries.load(LT_LibPath) as (data_from, data_to):
         data_to.actions = data_from.actions #todo: store list of appended files to for cleaning up later
 
-def LT_SelectMe(TheOneObj):
-    bpy.context.view_layer
 
 def LT_MannequinInit(mannequin_f, mannequin_b):
     
-    EnsuredCol = LT_ensure_collection("Lazy Tailor Assets")
-    
-    view_layer = bpy.context.view_layer
-    view_layer.active_layer_collection = view_layer.layer_collection.children[EnsuredCol.name] #easier to nest the loaded collection this way then trying to move it
+    EnsuredCol = LT_ensure_collection("Lazy Tailor Assets") #will also make the collection active
     LT_LoadCol("LT_DontTouchIsBones")
-    
     Mannequins = []
-    
     for M in bpy.data.objects:
-        if M.name == mannequin_f or M.name == mannequin_b:
+        if M.name.startswith("LT_Mannequin"):
             bpy.data.collections[EnsuredCol.name].objects.link(M)
-            Mannequins.append(M)
-            
-    bpy.ops.object.select_pattern(pattern=(mannequin_f + "*"), extend=False)
-    bpy.ops.object.make_local(type='SELECT_OBDATA')
-    bpy.data.armatures[mannequin_f].use_fake_user = True
-    bpy.data.armatures[mannequin_b].use_fake_user = True
-
+            Mannequins.append(M.name)
     
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_by_type(type='ARMATURE')
+    bpy.ops.object.make_local(type='SELECT_OBDATA')
+    
+    for N in bpy.context.selected_objects: #this crap is literaly just to make sure that blender dosen't try to effect the linked data with similar names ffs
+        N.data.use_fake_user = True
+        N.data.name = "Local_" + ( N.name.replace('LT_',''))
+        N.name = "Local_" + ( N.name.replace('LT_',''))
+
 class LT_OT_initialise(bpy.types.Operator):
 
     bl_idname = "lt.initialise"
@@ -79,10 +77,11 @@ class LT_OT_initialise(bpy.types.Operator):
     
     def execute(self, context):
 
-        lt_props = bpy.context.scene.lt_props
-
-        LT_MannequinInit(lt_props.mannequin_form, lt_props.mannequin_base)
-        bpy.context.scene.lt_props.InitBool = True
+        tailor_props = bpy.context.scene.tailor_props
+        bpy.ops.object.mode_set(mode="OBJECT")
+        LT_MannequinInit(tailor_props.mannequin_form, tailor_props.mannequin_base)
+        bpy.context.view_layer.objects.active = bpy.data.objects[tailor_props.mannequin_form]
+        bpy.context.scene.tailor_props.InitBool = True
         
         return {"FINISHED"}
 
