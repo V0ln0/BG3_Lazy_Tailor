@@ -27,6 +27,9 @@ import bpy.utils.previews
 from . Skeleton_Manager import *
 from . Skeleton_Closet import *
 from . LazyTalior_Prop import *
+from . LazyTalior_UI_Icons import *
+
+
 
 bl_info = {
     "name": "BG3 Lazy Tailor",
@@ -65,7 +68,7 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
         layout.prop(props, "to_body")
         row = layout.row()
         layout.operator("lt.defualt_preset_tailor")
-
+        layout.operator("lt.mannequin_reset")
 class LT_PT_InitPanel(bpy.types.Panel):
     
     bl_label = "Lazy Talior Supply Closet"
@@ -90,27 +93,14 @@ class LT_PT_InitPanel(bpy.types.Panel):
                 icon='RADIOBUT_ON')
 
 
-def LT_IconFactory(RegBool: bool):
-    
-    if RegBool == True:
-        pcoll = bpy.utils.previews.new()
-        my_icons_dir = os.path.join(os.path.dirname(__file__), "icons")
-        pcoll.load("my_icon", os.path.join(my_icons_dir, "icon-image.png"), 'IMAGE')
-        preview_collections["main"] = pcoll
-    else:
-        for pcoll in preview_collections.values():
-            bpy.utils.previews.remove(pcoll)
-        preview_collections.clear()
-
-preview_collections = {}
-
 classes = (
+    
     LT_PT_LazyPanelMain,
     LT_PT_InitPanel,
     LT_OT_initialise,
     LT_OT_defualt_preset_tailor,
     tailor_props,
-    LT_OT_body_reset,
+    LT_OT_mannequin_reset,
 
     )
 

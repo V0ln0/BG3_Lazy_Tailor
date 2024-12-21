@@ -3,8 +3,8 @@ import bpy
 
 base_body = (
     
-    ("HUM_F", "Human(Fem)", "Hu-mon feeeeeeeemale", 1),
-    ("HUM_M", "Human(Masc)", "We're just normal men", 2)
+    ("HUM_F", "Human(Fem)", "Hu-mon feeeeeeeemale", "USER", 1),
+    ("HUM_M", "Human(Masc)", "We're just normal men", "USER", 2)
 )
 
 
