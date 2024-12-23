@@ -27,12 +27,14 @@ from enum import Enum
 # possible todo: come back and add a frame work to allow converting from other body types to HUM_M/HUM_F instead of just from
 class LT_BodyShop:
     
-    def __init__(self, LMB, LM, PreSet, BodyArm):
-        self.LMB = LMB
-        self.LM = LM
+    def __init__(self, PreSet, BodyArm):
+        
         self.PreSet = PreSet # name(string) of the action being called
         self.BodyArm = BodyArm # name(string) of the body armature that we're changing too, not always needed 
-
+    
+    LMB = "Local_Mannequin_Base"
+    LM = "Local_Mannequin"
+    
     # upon swapping armature data, the 'childof' constraints need to have their inverse set again, lest you wish to see some sort of demonic gibon
     def Childof_MassInvert(self):
         PN = bpy.data.objects[self.LM]
@@ -60,23 +62,23 @@ class LT_BodyShop:
             bpy.ops.pose.user_transforms_clear(only_selected=False)
         bpy.data.objects[self.LM].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
 
+    def FullReset(self): #used to completely reset the LMB back to its defualt
+        bpy.data.objects[self.LMB].data = bpy.data.armatures[self.LMB]
+        self.Childof_Validator()
+        bpy.ops.pose.armature_apply(selected=False)
 
-    def SwapSkeleton(self, Full_Reset=False, Needs_Rest=False):
+    def SwapSkeleton(self, Needs_Rest=False):
 
         bpy.ops.pose.user_transforms_clear(only_selected=False)
-        if Full_Reset == False:
-            bpy.data.objects[self.LMB].data = bpy.data.armatures[self.BodyArm]
-            self.Childof_Validator()
-            if Needs_Rest == True:
-                bpy.ops.pose.armature_apply(selected=False)
-            #"Needs_Rest" is for when a new rest pose needs to be appiled to the armatrue
-            # rest pose is the defualt postion of bones, mainly needed for when converting FROM HUM_M --> HUM_F or vice versa  
-            # would also be need for converting something like GNO_M to HUM_M
+        bpy.data.objects[self.LMB].data = bpy.data.armatures[self.BodyArm]
+        self.Childof_Validator()
         
-        else: # Full_Reset == true: used to completely reset the LMB back to its defualt
-            bpy.data.objects[self.LMB].data = bpy.data.armatures[self.LMB]
-            self.Childof_Validator()
+        if Needs_Rest == True:
             bpy.ops.pose.armature_apply(selected=False)
+            #"Needs_Rest" is for when a new rest pose needs to be appiled to the armatrue
+            # rest pose is the defualt postion of bones, mainly needed for when converting an outfit that is not fitted to the current armature.
+            # converting armour that was made to fit HUM_M, LM's rest pose needs to be HUM_M
+            # if the armour was made to fit GNO_F, then the rest pose needs to be GNO_F
 
     def BodySwap(self): 
                                     
@@ -91,50 +93,70 @@ def Active_Check(ObjName): # norb's hell
     bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
     bpy.ops.object.mode_set(mode="POSE")
 
+
+#pattern for tuple (PRESET_NAME, SKELENTON)
+class F_PreSets(Enum):
+
+    GTY = ("LT_GTY_F_BDY", "LT_HUM_F")
+    HUM_S = ("LT_HUM_FS_BDY", "LT_HUM_FS")
+    DGB = ("LT_DGB_F_BDY", "LT_HUM_FS")
+    GNO = ("LT_GNO_F_BDY", "LT_SHORT_F")
+    HFL = ("LT_HFL_F_BDY", "LT_SHORT_F")
+    DWR = ("LT_DWR_F_BDY", "LT_DWR_F")
+    HRT = ("LT_HUM_F_FTM", "LT_HUM_M")
+    
+class M_PreSets(Enum):
+    
+    GTY = ("LT_GTY_M_BDY", "LT_HUM_M")
+    HUM_S = ("LT_HUM_MS_BDY", "LT_HUM_MS")
+    DGB = ("LT_DGB_M_BDY", "LT_HUM_MS")
+    GNO = ("LT_GNO_M_BDY", "LT_SHORT_M")
+    HFL = ("LT_HFL_M_BDY", "LT_SHORT_M")
+    DWR = ("LT_DWR_M_BDY", "LT_DWR_M")
+    HRT = ("LT_HUM_M_MTF", "LT_HUM_F")
+
+class LT_OT_set_base_tailor(bpy.types.Operator):
+
+    bl_idname = "lt.set_base_tailor"
+    bl_label = "Set Base"
+    bl_description = "Changes the resting postion of the mannequin to the body type selected in 'From:'"
+
+    def execute(self, context):
+        
+        tailor_props = bpy.context.scene.tailor_props
+        Active_Check(tailor_props.mannequin_form)
+        SewingPattern = LT_BodyShop(
+            PreSet=("NONE"),
+            BodyArm=("LT_" + (tailor_props.from_body))
+            )
+        
+        SewingPattern.SwapSkeleton(Needs_Rest=True)
+  
+        return {"FINISHED"}
+    
 class LT_OT_defualt_preset_tailor(bpy.types.Operator):
 
     bl_idname = "lt.defualt_preset_tailor"
     bl_label = "Apply Preset"
-    bl_description = "Swaps the Body Type That You Are Fitting too"
+    bl_description = "Applies the pre-set selected in 'To:' to the Mannequin. WARNING: will clear all user transforms"
 
-    #pattern for tuple (PRESET_NAME, SKELENTON)
-    class F_PreSets(Enum):
     
-        GTY = ("LT_GTY_F_BDY", "LT_HUM_F")
-        HUM_S = ("LT_HUM_FS_BDY", "LT_HUM_FS")
-        DGB = ("LT_DGB_F_BDY", "LT_HUM_FS")
-        GNO = ("LT_GNO_F_BDY", "LT_SHORT_F")
-        HFL = ("LT_HFL_F_BDY", "LT_SHORT_F")
-        DWR = ("LT_DWR_F_BDY", "LT_DWR_F")
-        HRT = ("LT_HUM_F_FTM", "LT_HUM_M")
-        
-    class M_PreSets(Enum):
-        
-        GTY = ("LT_GTY_M_BDY", "LT_HUM_M")
-        HUM_S = ("LT_HUM_MS_BDY", "LT_HUM_MS")
-        DGB = ("LT_DGB_M_BDY", "LT_HUM_MS")
-        GNO = ("LT_GNO_M_BDY", "LT_SHORT_M")
-        HFL = ("LT_HFL_M_BDY", "LT_SHORT_M")
-        DWR = ("LT_DWR_M_BDY", "LT_DWR_M")
-        HRT = ("LT_HUM_M_MTF", "LT_HUM_F")
-        
+
     def execute(self, context):
         
         tailor_props = bpy.context.scene.tailor_props
         Active_Check(tailor_props.mannequin_form)
 
         if tailor_props.from_body == "HUM_M":
-            Codebook = self.M_PreSets[tailor_props.to_body]
+            Codebook = M_PreSets[tailor_props.to_body]
         else:
-            Codebook = self.F_PreSets[tailor_props.to_body]
+            Codebook = F_PreSets[tailor_props.to_body]
         
         # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
         SewingPattern = LT_BodyShop(
-            
-            tailor_props.mannequin_base, 
-            tailor_props.mannequin_form, 
-            Codebook.value[0], 
-            Codebook.value[1])
+
+            PreSet=Codebook.value[0], 
+            BodyArm=Codebook.value[1])
         
         SewingPattern.BodySwap()
         
@@ -150,12 +172,6 @@ class LT_OT_mannequin_reset(bpy.types.Operator):
     def execute(self, context):
         tailor_props = bpy.context.scene.tailor_props
         Active_Check(tailor_props.mannequin_form)
-        
-        SewingPattern = LT_BodyShop(
-            
-            tailor_props.mannequin_base, 
-            tailor_props.mannequin_form,
-        )
-        
-        SewingPattern.SwapSkeleton(Full_Reset=True)
+
+        LT_BodyShop(PreSet=("NONE"), BodyArm=("NONE")).FullReset()
         return {"FINISHED"}

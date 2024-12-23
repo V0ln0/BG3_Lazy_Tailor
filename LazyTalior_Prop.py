@@ -1,10 +1,9 @@
 import bpy
 
-
 base_body = (
     
-    ("HUM_F", "Human(Fem)", "Hu-mon feeeeeeeemale", "USER", 1),
-    ("HUM_M", "Human(Masc)", "We're just normal men", "USER", 2)
+    ("HUM_F", "Human(Fem)", "Hu-mon feeeeeeeemale", 1),
+    ("HUM_M", "Human(Masc)", "We're just normal men", 2)
 )
 
 
@@ -31,7 +30,7 @@ base_preset_list = (
     ("GNO", "Gnome", "you've been gnomed", 4),
     ("HFL", "Halfling", "fuck you tolkien", 5),
     ("DWR", "Dwarf", "Diggy Diggy Hole", 6),
-    ("HRT", "trans", "transes your gender", 7),
+    ("HRT", "FTM/MTF", "transes your gender", 7),
 )
 
 
@@ -43,13 +42,13 @@ class tailor_props(bpy.types.PropertyGroup):
         name="From",
         description="The target game. Currently determines the model format type",
         items=base_body,
-        default=(1),
+        default=(2),
     )
     to_body: bpy.props.EnumProperty(
         name="To",
         description="The target game. Currently determines the model format type",
         items=base_preset_list,
-        default=(1),
+        default=(3),
     )
 
 
