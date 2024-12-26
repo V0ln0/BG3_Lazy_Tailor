@@ -4,7 +4,7 @@ import bpy
 import os
 from os import path
 
-LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor\library\LazyTalior_Assets.blend")
+LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor", "library", "LazyTalior_Assets.blend")
 
 
 # this file used to be so much longer....
@@ -50,7 +50,7 @@ def LT_LoadCol(AssetCol):
         data_to.actions = data_from.actions #todo: store list of appended files to for cleaning up later
 
 
-def LT_MannequinInit(mannequin_f, mannequin_b):
+def LT_MannequinInit():
     
     EnsuredCol = LT_ensure_collection("Lazy Tailor Assets") #will also make the collection active
     LT_LoadCol("LT_DontTouchIsBones")
@@ -79,7 +79,7 @@ class LT_OT_initialise(bpy.types.Operator):
 
         tailor_props = bpy.context.scene.tailor_props
         bpy.ops.object.mode_set(mode="OBJECT")
-        LT_MannequinInit(tailor_props.mannequin_form, tailor_props.mannequin_base)
+        LT_MannequinInit()
         bpy.context.view_layer.objects.active = bpy.data.objects[tailor_props.mannequin_form]
         bpy.context.scene.tailor_props.InitBool = True
         

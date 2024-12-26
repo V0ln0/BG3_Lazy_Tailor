@@ -34,6 +34,8 @@ base_preset_list = (
 )
 
 
+
+
 class tailor_props(bpy.types.PropertyGroup):
     mannequin_base: bpy.props.StringProperty(name="mannequin_base", default="Local_Mannequin_Base")
     mannequin_form: bpy.props.StringProperty(name="mannequin_form", default="Local_Mannequin") 

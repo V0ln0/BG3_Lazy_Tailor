@@ -33,7 +33,7 @@ bl_info = {
     "name": "BG3 Lazy Tailor(BETA)",
     "description": "A tool aimed at making the proccsess of refiting outfits for various races/bodytypes for use in Baldur's Gate 3 easier.",
     "author": "Volno",
-    "version": (1, 0, 0),
+    "version": (0, 1, 2),
     "blender": (4, 2, 3),
     "location": "Scene > Properties > BG3LazyTailor Tools tab",
     "warning": "baby's first Blender addon",
@@ -66,8 +66,6 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
             layout.prop(props, "to_body")
             layout.operator("lt.defualt_preset_tailor")
             layout.operator("lt.mannequin_reset")
-
-
 
 
 classes = (
