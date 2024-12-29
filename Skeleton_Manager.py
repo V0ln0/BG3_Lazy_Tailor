@@ -49,7 +49,7 @@ class LT_BodyShop:
     # can't effect constraints on bones that are not visable in the viewport
     def Childof_Validator(self):
         
-        CB = bpy.data.armatures[self.LM].collections_all["Deform_Bones"]
+        CB = bpy.data.armatures[self.LM].collections["Deform_Bones"]
         if CB.is_visible == False:
             CB.is_visible = True
         
@@ -88,10 +88,22 @@ class LT_BodyShop:
 
 def Active_Check(ObjName): # norb's hell
     
-    bpy.ops.object.mode_set(mode="OBJECT")
-    bpy.ops.object.select_all(action="DESELECT")
-    bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
+    try:
+        bpy.ops.object.mode_set(mode="OBJECT")
+        bpy.ops.object.select_all(action="DESELECT")
+    except RuntimeError:
+        bpy.ops.object.select_all(action="DESELECT")
+        bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
+    
     bpy.ops.object.mode_set(mode="POSE")
+
+# def Active_Check(ObjName): # norb's hell
+    
+
+#     bpy.ops.object.mode_set(mode="OBJECT")
+#     bpy.ops.object.select_all(action="DESELECT")
+#     bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
+#     bpy.ops.object.mode_set(mode="POSE")
 
 
 #pattern for tuple (PRESET_NAME, SKELENTON)
@@ -114,6 +126,7 @@ class M_PreSets(Enum):
     HFL = ("LT_HFL_M_BDY", "LT_SHORT_M")
     DWR = ("LT_DWR_M_BDY", "LT_DWR_M")
     HRT = ("LT_HUM_M_MTF", "LT_HUM_F")
+
 
 class LT_OT_set_base_tailor(bpy.types.Operator):
 
@@ -140,7 +153,6 @@ class LT_OT_defualt_preset_tailor(bpy.types.Operator):
     bl_label = "Apply Preset"
     bl_description = "Applies the pre-set selected in 'To:' to the Mannequin. WARNING: will clear all user transforms"
 
-    
 
     def execute(self, context):
         
@@ -175,3 +187,66 @@ class LT_OT_mannequin_reset(bpy.types.Operator):
 
         LT_BodyShop(PreSet=("NONE"), BodyArm=("NONE")).FullReset()
         return {"FINISHED"}
+
+
+# gonna use this for applying user defined presets
+# instead of searching by name we're gonna add a short ID to the start of the action name, and use those numbers as instructions on how to apply the preset
+# not sure how many numbers so far the pattern is 
+# we playing fucking Enum Plinko here
+class Preset_Type(Enum): 
+    
+    Body_Refit_no_rest = 1 #default type, swaps the body but dose not set a new rest postion
+    Body_Refit_with_rest = 2 #swaps body and sets a new rest pose
+    Layered = 3 # changes nothing about the armature and instead blends the preset with the existing deformations
+
+
+class F_Skeletons(Enum): 
+    
+    LT_HUM_F = 1
+    LT_HUM_FS = 2
+    LT_SHORT_F = 3
+    LT_DWR_F = 4
+
+class M_Skeletons(Enum):
+    
+    LT_HUM_M = 1
+    LT_HUM_MS = 2
+    LT_SHORT_M = 3
+    LT_DWR_M = 4
+
+
+# class LT_OT_mannequin_reset(bpy.types.Operator):
+
+#     bl_idname = "lt.apply_user_action"
+#     bl_label = "apply_user_action"
+#     bl_description = "Sets the Mannequin back to a nuteral state"
+
+
+#     def execute(self, context):
+        
+#         return {"FINISHED"}
+# #Action name is something like 1204_WHATEVERRRRRRRRRR
+# class LT_ReadCode:
+
+#     def __init__(self, ActionName):
+#         self.ActionName = ActionName
+
+#     def GetBones(self):
+        
+#         Bones = []
+#         Code = self.ActionName[1:4]
+
+#         if Code[0] == 0:
+#             Bones.append(F_Skeletons(Code[1]).name)
+#         else:
+#             Bones.append(M_Skeletons(Code[1]).name)
+
+#         if Code[2] == 0:
+#             Bones.append(F_Skeletons(Code[3]).name)
+#         else:
+#             Bones.append(M_Skeletons(Code[3]).name)
+
+#         return Bones
+        
+
+

@@ -37,9 +37,11 @@ base_preset_list = (
 
 
 class tailor_props(bpy.types.PropertyGroup):
+    
     mannequin_base: bpy.props.StringProperty(name="mannequin_base", default="Local_Mannequin_Base")
     mannequin_form: bpy.props.StringProperty(name="mannequin_form", default="Local_Mannequin") 
     InitBool: bpy.props.BoolProperty(name="InitBool", default=False)
+    user_action: bpy.props.StringProperty(name="user_action") 
     from_body: bpy.props.EnumProperty(
         name="From",
         description="The target game. Currently determines the model format type",
@@ -52,7 +54,7 @@ class tailor_props(bpy.types.PropertyGroup):
         items=base_preset_list,
         default=(3),
     )
-
+    preset_storage: bpy.props.StringProperty(name="preset_storage", default="NONE") 
 
 
 # https://docs.blender.org/api/4.3/bpy.props.html#propertygroup-example

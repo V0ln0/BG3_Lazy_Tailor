@@ -34,7 +34,7 @@ bl_info = {
     "description": "A tool aimed at making the proccsess of refiting outfits for various races/bodytypes for use in Baldur's Gate 3 easier.",
     "author": "Volno",
     "version": (0, 1, 2),
-    "blender": (4, 2, 3),
+    "blender": (4, 0, 0),
     "location": "Scene > Properties > BG3LazyTailor Tools tab",
     "warning": "baby's first Blender addon",
     "wiki_url": "",
@@ -66,7 +66,7 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
             layout.prop(props, "to_body")
             layout.operator("lt.defualt_preset_tailor")
             layout.operator("lt.mannequin_reset")
-
+            # layout.prop_search(props, "user_action", context.blend_data, "actions") #figure out a way to search for specifc names
 
 classes = (
     
