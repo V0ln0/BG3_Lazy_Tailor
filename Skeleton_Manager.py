@@ -58,11 +58,13 @@ class LT_BodyShop:
 
     def ApplyPreSet(self, Is_Addative=False): #"Is_Addative" for when applying a preset on top of existing deformations without clearing them
         
+        bpy.ops.pose.select_all(action='DESELECT')
         if Is_Addative == False:
             bpy.ops.pose.user_transforms_clear(only_selected=False)
         bpy.data.objects[self.LM].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
 
     def FullReset(self): #used to completely reset the LMB back to its defualt
+        
         bpy.data.objects[self.LMB].data = bpy.data.armatures[self.LMB]
         self.Childof_Validator()
         bpy.ops.pose.armature_apply(selected=False)
@@ -79,32 +81,24 @@ class LT_BodyShop:
             # rest pose is the defualt postion of bones, mainly needed for when converting an outfit that is not fitted to the current armature.
             # converting armour that was made to fit HUM_M, LM's rest pose needs to be HUM_M
             # if the armour was made to fit GNO_F, then the rest pose needs to be GNO_F
-
+# bpy.ops.pose.select_all(action='DESELECT')
+    # functions sperated out like this so that we are able to call on indvidual parts
     def BodySwap(self): 
                                     
         self.SwapSkeleton()
-        self.ApplyPreSet()
+        bpy.ops.pose.select_all(action='DESELECT')
+        bpy.data.objects[self.LM].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
 
 
 def Active_Check(ObjName): # norb's hell
     
     try:
         bpy.ops.object.mode_set(mode="OBJECT")
-        bpy.ops.object.select_all(action="DESELECT")
     except RuntimeError:
-        bpy.ops.object.select_all(action="DESELECT")
         bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
     
+    bpy.ops.object.select_pattern(pattern=ObjName, extend=False)
     bpy.ops.object.mode_set(mode="POSE")
-
-# def Active_Check(ObjName): # norb's hell
-    
-
-#     bpy.ops.object.mode_set(mode="OBJECT")
-#     bpy.ops.object.select_all(action="DESELECT")
-#     bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
-#     bpy.ops.object.mode_set(mode="POSE")
-
 
 #pattern for tuple (PRESET_NAME, SKELENTON)
 class F_PreSets(Enum):
@@ -166,7 +160,6 @@ class LT_OT_defualt_preset_tailor(bpy.types.Operator):
         
         # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
         SewingPattern = LT_BodyShop(
-
             PreSet=Codebook.value[0], 
             BodyArm=Codebook.value[1])
         

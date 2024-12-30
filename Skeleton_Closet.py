@@ -78,7 +78,10 @@ class LT_OT_initialise(bpy.types.Operator):
     def execute(self, context):
 
         tailor_props = bpy.context.scene.tailor_props
-        bpy.ops.object.mode_set(mode="OBJECT")
+        try:
+            bpy.ops.object.mode_set(mode="OBJECT")
+        except RuntimeError:
+            pass
         LT_MannequinInit()
         bpy.context.view_layer.objects.active = bpy.data.objects[tailor_props.mannequin_form]
         bpy.context.scene.tailor_props.InitBool = True

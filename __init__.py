@@ -68,6 +68,31 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
             layout.operator("lt.mannequin_reset")
             # layout.prop_search(props, "user_action", context.blend_data, "actions") #figure out a way to search for specifc names
 
+
+class LT_PT_mannequin_vis(bpy.types.Panel):
+    
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "BG3 LT"
+    bl_label = 'Mannequin'
+    bl_context = 'posemode'
+
+    def draw(self, context):
+        # tailor_props = bpy.context.scene.tailor_props
+        # lt_obj = context.active_object
+        # if lt_obj is bpy.data.objects[tailor_props.mannequin_form]:
+        #     if context.mode == 'EDIT_ARMATURE':
+
+        layout = self.layout
+        row = layout.row(align=True)
+        row.label(text="Fuck Bitches Get Money", icon='RADIOBUT_ON')
+
+# class VIEW3D_PT_view3d_properties(Panel):
+#     bl_space_type = 'VIEW_3D'
+#     bl_region_type = 'UI'
+#     bl_category = "View"
+#     bl_label = "View"
+
 classes = (
     
     LT_PT_LazyPanelMain,
@@ -76,6 +101,7 @@ classes = (
     tailor_props,
     LT_OT_mannequin_reset,
     LT_OT_set_base_tailor,
+    LT_PT_mannequin_vis,
 
     )
 
