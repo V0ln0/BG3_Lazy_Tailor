@@ -22,8 +22,8 @@ Created by Volno
 # also I am dyslexic, typos abound
 import bpy
 
-from . Skeleton_Manager import *
-from . Skeleton_Closet import *
+from . LazyTalior_Manager import *
+from . LazyTalior_Closet import *
 from . LazyTalior_Prop import *
 from . LazyTalior_UI_Icons import *
 
@@ -54,17 +54,30 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         props = context.scene.tailor_props
-        row = layout.row(align=True)
+        
         if props.InitBool == False:
+            row = layout.row(align=True)
             row.label(text="Lazy Talior Status: NOT READY ", icon='RADIOBUT_OFF')
             layout.operator("lt.initialise",
                 text="Initialise")
         else:
-            row.label(text="Lazy Talior Status: READY ", icon='RADIOBUT_ON')
-            layout.prop(props, "from_body")
-            layout.operator("lt.set_base_tailor")
-            layout.prop(props, "to_body")
-            layout.operator("lt.defualt_preset_tailor")
+
+            row = layout.row(align=True)
+
+            box = layout.box()
+            row = box.row()
+            row.alignment = "CENTER"
+            row = box.row()
+            row.prop(props, "from_body")
+            col = row.column()
+            col.operator("lt.set_base_tailor")
+            col.scale_x = 0.5
+
+            row = box.row()
+            row.prop(props, "to_body")
+            col = row.column()
+            col.operator("lt.defualt_preset_tailor", text="Apply")
+            col.scale_x = 0.5
             layout.operator("lt.mannequin_reset")
             # layout.prop_search(props, "user_action", context.blend_data, "actions") #figure out a way to search for specifc names
 
@@ -78,14 +91,29 @@ class LT_PT_mannequin_vis(bpy.types.Panel):
     bl_context = 'posemode'
 
     def draw(self, context):
-        # tailor_props = bpy.context.scene.tailor_props
-        # lt_obj = context.active_object
-        # if lt_obj is bpy.data.objects[tailor_props.mannequin_form]:
-        #     if context.mode == 'EDIT_ARMATURE':
 
         layout = self.layout
-        row = layout.row(align=True)
-        row.label(text="Fuck Bitches Get Money", icon='RADIOBUT_ON')
+        mannequin_obj = bpy.data.objects[bpy.context.scene.tailor_props.mannequin_form]
+        mannequin_data = bpy.data.armatures[bpy.context.scene.tailor_props.mannequin_form]
+
+        if context.active_object is not mannequin_obj:
+ 
+            pass
+
+        else:
+            row = layout.row(align=True)
+            row.label(text="Control Visibility")
+            box = layout.box()
+            grid = box.grid_flow(row_major=True, columns=2, even_columns=True)
+
+            grid.prop(mannequin_data.collections["CTRL_Torso_Main"], "is_visible", text="Torso Main", toggle=True)
+            grid.prop(mannequin_data.collections["CTRL_Torso_Extra"], "is_visible", text="Torso Extra", toggle=True)
+            grid.prop(mannequin_data.collections["CTRL_Arms_Main"], "is_visible", text="Arms Main", toggle=True)            
+            grid.prop(mannequin_data.collections["CTRL_Arms_Extra"], "is_visible", text="Arms Extra", toggle=True)
+            grid.prop(mannequin_data.collections["CTRL_Hands_Main"], "is_visible", text="Hands Main", toggle=True)            
+            grid.prop(mannequin_data.collections["CTRL_Hands_Extra"], "is_visible", text="Hands Extra", toggle=True)
+            grid.prop(mannequin_data.collections["CTRL_Legs_Main"], "is_visible", text="Legs Main", toggle=True)
+            grid.prop(mannequin_data.collections["CTRL_Legs_Extra"], "is_visible", text="Legs Extra", toggle=True)
 
 # class VIEW3D_PT_view3d_properties(Panel):
 #     bl_space_type = 'VIEW_3D'

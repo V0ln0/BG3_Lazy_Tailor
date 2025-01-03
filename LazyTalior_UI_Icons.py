@@ -3,16 +3,11 @@
 # import bpy.utils.previews
 
 
-# def LT_IconFactory(RegBool: bool):
-    
-#     if RegBool == True:
-#         pcoll = bpy.utils.previews.new()
-#         my_icons_dir = os.path.join(os.path.dirname(__file__), "icons")
-#         pcoll.load("human_icon", os.path.join(my_icons_dir, "icon-human.png"), 'IMAGE')
-#         preview_collections["main"] = pcoll
-#     else:
-#         for pcoll in preview_collections.values():
-#             bpy.utils.previews.remove(pcoll)
-#         preview_collections.clear()
+# lt_icon_dict = bpy.utils.previews.new()
+# lt_icons_dir = os.path.join(os.path.dirname(__file__), "icons")
+# lt_icons = None
 
-# preview_collections = {}
+
+# https://b3d.interplanety.org/en/custom-icons-for-enumproperty-in-blender/
+# https://blender.stackexchange.com/questions/73876/how-to-add-custom-icon-to-enumproperty-in-add-on
+# https://blender.stackexchange.com/questions/32335/how-to-implement-custom-icons-for-my-script-addon

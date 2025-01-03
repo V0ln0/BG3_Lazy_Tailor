@@ -1,5 +1,6 @@
 import bpy
 
+
 base_body = (
     
     ("HUM_F", "Human(Fem)", "Hu-mon feeeeeeeemale", 1),
@@ -35,27 +36,50 @@ base_preset_list = (
 
 
 
+skeleton_types = (
+    
+    ("LT_HUM_F", "Human(Fem)", "Fits body type 1(BT1) races & fem Githyanki.", 1),
+    ("LT_HUM_M", "Human(Masc)", "Fits body type 2(BT2) races & masc Githyanki.", 2),
+    ("LT_HUM_FS", "Human(Fem strong)", "Fits body type 3(BT3) races + fem Dragonborn & Half-Orcs", 3),
+    ("LT_HUM_MS", "Human(Masc strong)", "Fits body type 4(BT4) races + masc Dragonborn & Half-Orcs", 4),
+    ("LT_SHORT_F", "Short(Fem)", "Fits fem Gnomes and Halflings", 5),
+    ("LT_SHORT_M", "Short(Masc)", "Fits masc Gnomes and Halflings", 6),
+    ("LT_DWR_F", "Dwarf(Fem)", "Fits fem Dwarves", 7),
+    ("LT_DWR_F", "Dwarf(Masc)", "Fits masc Dwarves", 8),
+)
 
 class tailor_props(bpy.types.PropertyGroup):
     
+
+    #stoing the names here so that if they need to be changed I only have to update the name in once place
     mannequin_base: bpy.props.StringProperty(name="mannequin_base", default="Local_Mannequin_Base")
     mannequin_form: bpy.props.StringProperty(name="mannequin_form", default="Local_Mannequin") 
-    InitBool: bpy.props.BoolProperty(name="InitBool", default=False)
-    user_action: bpy.props.StringProperty(name="user_action") 
+    InitBool: bpy.props.BoolProperty(name="InitBool", default=False) #stops the user from doubleing up assets, todo: add system to refresh blend file's assets
+    
     from_body: bpy.props.EnumProperty(
         name="From",
-        description="The target game. Currently determines the model format type",
+        description="Name of body that you are converting FROM",
         items=base_body,
         default=(2),
     )
     to_body: bpy.props.EnumProperty(
         name="To",
-        description="The target game. Currently determines the model format type",
+        description="Name of the body that you are converting TO",
         items=base_preset_list,
         default=(3),
     )
-    preset_storage: bpy.props.StringProperty(name="preset_storage", default="NONE") 
-
+    race_names: bpy.props.EnumProperty(
+        name="Race",
+        description="Names Of the BG3's playable races",
+        items=race_list,
+        default=(1)
+    )
+    skeleton_name: bpy.props.EnumProperty(
+        name="skeleton type",
+        description="Type of skeleton to be added to your scene (Note, some races share a skelenton! Read the description for each type for details)",
+        items=skeleton_types,
+        default=(1)
+    )
 
 # https://docs.blender.org/api/4.3/bpy.props.html#propertygroup-example
 # https://docs.blender.org/api/4.3/bpy.types.UILayout.html#bpy.types.UILayout
