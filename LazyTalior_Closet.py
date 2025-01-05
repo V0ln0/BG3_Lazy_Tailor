@@ -72,6 +72,22 @@ def LT_MannequinInit():
         N.data.name = "Local_" + ( N.name.replace('LT_',''))
         N.name = "Local_" + ( N.name.replace('LT_',''))
 
+
+def LT_VersionCheck():
+
+    if bpy.app.version < (4, 0, 0):
+        return False
+    else:
+        return True
+
+def LT_ErrorPopup():
+
+    def draw(self, context):
+       self.layout.label(text="Lazy Tailor requires Blender 4.0.0 or above, please download the latest version from Blender.org.")
+       self.layout.label(text="Remember: you can have more than one copy of Blender instaled!")
+        
+    bpy.context.window_manager.popup_menu(draw, title = "Warning: Incompatible Version of Blender detected", icon = 'ERROR')
+
 class LT_OT_initialise(bpy.types.Operator):
 
     bl_idname = "lt.initialise"
@@ -79,14 +95,18 @@ class LT_OT_initialise(bpy.types.Operator):
     bl_description = "Imports assets needed by the addon into your current Blend file. You only need to run this once."
     
     def execute(self, context):
-
-        try:
-            bpy.ops.object.mode_set(mode="OBJECT")
-        except RuntimeError:
-            pass
-        LT_MannequinInit()
-        bpy.context.view_layer.objects.active = bpy.data.objects[bpy.context.scene.tailor_props.mannequin_form]
-        bpy.context.scene.tailor_props.InitBool = True
+        
+        if LT_VersionCheck() == False:
+            LT_ErrorPopup()
+            
+        else:
+            try:
+                bpy.ops.object.mode_set(mode="OBJECT")
+            except RuntimeError:
+                pass
+            LT_MannequinInit()
+            bpy.context.view_layer.objects.active = bpy.data.objects[bpy.context.scene.tailor_props.mannequin_form]
+            bpy.context.scene.tailor_props.InitBool = True
         
         return {"FINISHED"}
 
@@ -102,37 +122,9 @@ class LT_OT_raise_undead(bpy.types.Operator):
         LT_AssetDrop(bpy.context.scene.tailor_props.skeleton_name)
 
         return {"FINISHED"}
+
+
 # possible to do: 
 #   figure out how to add custom thumbnails to the actions
 #   Add in a way for users to write their own actions into LazyTalior_Assets.blend? #pipedream
 #   could allow users to write their own assets into the original file or a seperate file to laod in 
-
-    # def draw(self, context):
-    #     layout = self.layout
-    #     props = context.scene.tailor_props
-        
-    #     if props.InitBool == False:
-    #         row = layout.row(align=True)
-    #         row.label(text="Lazy Talior Status: NOT READY ", icon='RADIOBUT_OFF')
-    #         layout.operator("lt.initialise",
-    #             text="Initialise")
-    #     else:
-    #         global lt_icons
-    #         row = layout.row(align=True)
-    #         row.label(text="Lazy Talior Status: READY ", icon_value=lt_icons["human_icon"].icon_id)
-            
-    #         box = layout.box()
-    #         row = box.row()
-    #         row.prop(props, "from_body")
-    #         col = row.column()
-    #         col.operator("lt.set_base_tailor")
-    #         col.scale_x = 0.5
-
-    #         row = box.row()
-    #         row.prop(props, "to_body")
-    #         col = row.column()
-    #         col.operator("lt.defualt_preset_tailor", text="Apply")
-    #         col.scale_x = 0.5
-    #         layout.operator("lt.mannequin_reset")
-    #         layout.prop(props, "skeleton_name")
-    #         layout.operator("lt.raise_undead")

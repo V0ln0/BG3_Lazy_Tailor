@@ -1,61 +1,58 @@
 import bpy
 
 
-base_body = (
-    
-    ("HUM_F", "Human(Fem)", "Hu-mon feeeeeeeemale", 1),
-    ("HUM_M", "Human(Masc)", "We're just normal men", 2)
-)
-
-
-race_list = (
-    
-    ("HUM", "Humans", "normies", 1),
-    ("ELF", "Elf", "Knife Ears", 2),
-    ("HEL", "Half-Elf", "Half Knife Ears", 3),
-    ("TIF", "Tiefling", "Horny", 4),
-    ("GTY", "Githyanki", "space frogs", 5),
-    ("DGB", "Dragonborn", "scalie fucker", 6),
-    ("HRC", "Half-Orc", "WAAAAAAAGH", 7),
-    ("GNO", "Gnome", "you've been gnomed", 8),
-    ("HFL", "Halfling", "fuck you tolkien", 9),
-    ("DWR", "Dwarf", "Diggy Diggy Hole", 10)
-)
-
-
-base_preset_list = (
-
-    ("GTY", "Githyanki", "space frogs", 1),
-    ("DGB", "Dragonborn", "scalie fucker", 2),
-    ("HUM_S", "Human(Strong)", "roids", 3),
-    ("GNO", "Gnome", "you've been gnomed", 4),
-    ("HFL", "Halfling", "fuck you tolkien", 5),
-    ("DWR", "Dwarf", "Diggy Diggy Hole", 6),
-    ("HRT", "FTM/MTF", "transes your gender", 7),
-)
-
-
-
-skeleton_types = (
-    
-    ("LT_HUM_F", "Human(Fem)", "Fits body type 1(BT1) races & fem Githyanki.", 1),
-    ("LT_HUM_M", "Human(Masc)", "Fits body type 2(BT2) races & masc Githyanki.", 2),
-    ("LT_HUM_FS", "Human(Fem strong)", "Fits body type 3(BT3) races + fem Dragonborn & Half-Orcs", 3),
-    ("LT_HUM_MS", "Human(Masc strong)", "Fits body type 4(BT4) races + masc Dragonborn & Half-Orcs", 4),
-    ("LT_SHORT_F", "Short(Fem)", "Fits fem Gnomes and Halflings", 5),
-    ("LT_SHORT_M", "Short(Masc)", "Fits masc Gnomes and Halflings", 6),
-    ("LT_DWR_F", "Dwarf(Fem)", "Fits fem Dwarves", 7),
-    ("LT_DWR_F", "Dwarf(Masc)", "Fits masc Dwarves", 8),
-)
-
 class tailor_props(bpy.types.PropertyGroup):
-    
 
-    #stoing the names here so that if they need to be changed I only have to update the name in once place
+    base_body = (
+        
+        ("HUM_F", "Human(Fem)", "Hu-mon feeeeeeeemale", 1),
+        ("HUM_M", "Human(Masc)", "We're just normal men", 2)
+    )
+
+    base_preset_list = (
+
+        ("GTY", "Githyanki", "space frogs", 1),
+        ("DGB", "Dragonborn", "scalie fucker", 2),
+        ("HUM_S", "Human(Strong)", "roids", 3),
+        ("GNO", "Gnome", "you've been gnomed", 4),
+        ("HFL", "Halfling", "fuck you tolkien", 5),
+        ("DWR", "Dwarf", "Diggy Diggy Hole", 6),
+        ("HRT", "FTM/MTF", "transes your gender", 7),
+    )
+    
+    skeleton_types = (
+        
+        ("LT_HUM_F", "Human(Fem)", "Fits body type 1(BT1) races & fem Githyanki.", 1),
+        ("LT_HUM_M", "Human(Masc)", "Fits body type 2(BT2) races & masc Githyanki.", 2),
+        ("LT_HUM_FS", "Human(Fem strong)", "Fits body type 3(BT3) races + fem Dragonborn & Half-Orcs", 3),
+        ("LT_HUM_MS", "Human(Masc strong)", "Fits body type 4(BT4) races + masc Dragonborn & Half-Orcs", 4),
+        ("LT_SHORT_F", "Short(Fem)", "Fits fem Gnomes and Halflings", 5),
+        ("LT_SHORT_M", "Short(Masc)", "Fits masc Gnomes and Halflings", 6),
+        ("LT_DWR_F", "Dwarf(Fem)", "Fits fem Dwarves", 7),
+        ("LT_DWR_F", "Dwarf(Masc)", "Fits masc Dwarves", 8),
+    )    
+
+    race_list = (
+        
+        ("HUM", "Humans", "normies", 1),
+        ("ELF", "Elf", "Knife Ears", 2),
+        ("HEL", "Half-Elf", "Half Knife Ears", 3),
+        ("TIF", "Tiefling", "Horny", 4),
+        ("GTY", "Githyanki", "space frogs", 5),
+        ("DGB", "Dragonborn", "scalie fucker", 6),
+        ("HRC", "Half-Orc", "WAAAAAAAGH", 7),
+        ("GNO", "Gnome", "you've been gnomed", 8),
+        ("HFL", "Halfling", "fuck you tolkien", 9),
+        ("DWR", "Dwarf", "Diggy Diggy Hole", 10)
+    )
+
+    #storing the names here so that if they need to be changed I only have to update the name in once place
     mannequin_base: bpy.props.StringProperty(name="mannequin_base", default="Local_Mannequin_Base")
     mannequin_form: bpy.props.StringProperty(name="mannequin_form", default="Local_Mannequin") 
+    
     InitBool: bpy.props.BoolProperty(name="InitBool", default=False) #stops the user from doubleing up assets, todo: add system to refresh blend file's assets
     
+    #might need to move these into a panel prop if we wanna do custom icons
     from_body: bpy.props.EnumProperty(
         name="From",
         description="Name of body that you are converting FROM",

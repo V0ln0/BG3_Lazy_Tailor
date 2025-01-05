@@ -61,9 +61,10 @@ class LT_PT_LazyPanelMain(bpy.types.Panel):
             layout.operator("lt.initialise",
                 text="Initialise")
         else:
-
+            
             row = layout.row(align=True)
-
+            row.label(text="Lazy Talior Status: READY ", icon='RADIOBUT_ON')
+            
             box = layout.box()
             row = box.row()
             row.alignment = "CENTER"
@@ -115,11 +116,6 @@ class LT_PT_mannequin_vis(bpy.types.Panel):
             grid.prop(mannequin_data.collections["CTRL_Legs_Main"], "is_visible", text="Legs Main", toggle=True)
             grid.prop(mannequin_data.collections["CTRL_Legs_Extra"], "is_visible", text="Legs Extra", toggle=True)
 
-# class VIEW3D_PT_view3d_properties(Panel):
-#     bl_space_type = 'VIEW_3D'
-#     bl_region_type = 'UI'
-#     bl_category = "View"
-#     bl_label = "View"
 
 classes = (
     
