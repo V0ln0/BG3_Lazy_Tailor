@@ -46,12 +46,17 @@ class tailor_props(bpy.types.PropertyGroup):
         ("DWR", "Dwarf", "Diggy Diggy Hole", 10)
     )
 
-    #storing the names here so that if they need to be changed I only have to update the name in once place
+    #storing the names here so that if they need to be changed I only have to update the name in one place
     mannequin_base: bpy.props.StringProperty(name="mannequin_base", default="Local_Mannequin_Base")
     mannequin_form: bpy.props.StringProperty(name="mannequin_form", default="Local_Mannequin") 
-    
     InitBool: bpy.props.BoolProperty(name="InitBool", default=False) #stops the user from doubleing up assets, todo: add system to refresh blend file's assets
     
+    as_shapekey_ui: bpy.props.BoolProperty(
+        name="As Shapekey",
+        default=False,
+        description="Apply changes as a shapekey rather than finalising the changes."
+        ) 
+     
     #might need to move these into a panel prop if we wanna do custom icons
     from_body: bpy.props.EnumProperty(
         name="From",
@@ -73,7 +78,7 @@ class tailor_props(bpy.types.PropertyGroup):
     )
     skeleton_name: bpy.props.EnumProperty(
         name="skeleton type",
-        description="Type of skeleton to be added to your scene (Note, some races share a skelenton! Read the description for each type for details)",
+        description="Export ready skeleton.",
         items=skeleton_types,
         default=(1)
     )

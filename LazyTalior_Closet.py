@@ -30,22 +30,18 @@ def LT_ensure_collection(Cname) -> bpy.types.Collection:
 
     return link_to
 
-# drops an object into the scene by name, works on objects inside instanced collections
-def LT_AssetDrop(AssetName):
-
-    bpy.ops.object.add_named(name=AssetName)
-
 
 def LT_LoadCol(AssetCol):
    
     bpy.ops.wm.link(
+        
         filepath=os.path.join(LT_LibPath, "Collection", AssetCol),
         directory=os.path.join(LT_LibPath, "Collection"),
         filename=AssetCol,
         do_reuse_local_id=True,
         instance_collections=True
+        
         )
-
 
 
 def LT_MannequinInit():
@@ -111,15 +107,25 @@ class LT_OT_initialise(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class LT_OT_raise_undead(bpy.types.Operator):
+class LT_OT_object_drop(bpy.types.Operator):
 
-    bl_idname = "lt.raise_undead"
-    bl_label = "Raise Undead"
+    bl_idname = "lt.object_drop"
+    bl_label = "object drop"
     bl_description = "Imports an armature that is suitable to be exported in a GR2 file"
 
+    objname: bpy.props.StringProperty(
+        name="Asset Name",
+        default="",
+        )
+    
     def execute(self, context):
 
-        LT_AssetDrop(bpy.context.scene.tailor_props.skeleton_name)
+        try:
+            bpy.ops.object.mode_set(mode="OBJECT")
+        except RuntimeError:
+            pass
+        
+        bpy.ops.object.add_named(name=self.objname)
 
         return {"FINISHED"}
 

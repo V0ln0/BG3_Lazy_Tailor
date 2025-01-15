@@ -5,6 +5,7 @@
 import bpy
 import enum
 from enum import Enum
+from . LazyTalior_utils import *
 
 
 
@@ -36,7 +37,7 @@ class LT_BodyShop:
     LM = "Local_Mannequin"
     
     # upon swapping armature data, the 'childof' constraints need to have their inverse set again, lest you wish to see some sort of demonic gibon
-    def Childof_MassInvert(self):
+    def child_of_mass_invert(self):
         PN = bpy.data.objects[self.LM]
         for b in PN.pose.bones:
             for c in b.constraints:
@@ -46,14 +47,28 @@ class LT_BodyShop:
                     PN.data.bones.active = b.bone                               
                     bpy.ops.constraint.childof_set_inverse(constraint="Child Of", owner="BONE")
     
+    def stretch_to_mass_set(self):
+        PN = bpy.data.objects[self.LM]
+        for b in PN.pose.bones:
+            for c in b.constraints:
+                if c.type == "STRETCH_TO":
+                    context_py = bpy.context.copy()
+                    context_py["constraint"] = c
+                    PN.data.bones.active = b.bone                               
+                    bpy.ops.constraint.stretchto_reset(constraint="Stretch To", owner='BONE')
+
     # can't effect constraints on bones that are not visable in the viewport
-    def Childof_Validator(self):
+    def BoneVis_Validator(self, stretch_To=False):
         
         CB = bpy.data.armatures[self.LM].collections["Deform_Bones"]
         if CB.is_visible == False:
             CB.is_visible = True
         
-        self.Childof_MassInvert()
+        self.child_of_mass_invert()
+        
+        if stretch_To == True: #only needs to be true when also applying a new rest pose
+            self.stretch_to_mass_set() 
+        
         CB.is_visible = False
 
     def ApplyPreSet(self, Is_Addative=False): #"Is_Addative" for when applying a preset on top of existing deformations without clearing them
@@ -66,14 +81,14 @@ class LT_BodyShop:
     def FullReset(self): #used to completely reset the LMB back to its defualt
         
         bpy.data.objects[self.LMB].data = bpy.data.armatures[self.LMB]
-        self.Childof_Validator()
+        self.BoneVis_Validator(stretch_To=True)
         bpy.ops.pose.armature_apply(selected=False)
 
     def SwapSkeleton(self, Needs_Rest=False):
 
         bpy.ops.pose.user_transforms_clear(only_selected=False)
         bpy.data.objects[self.LMB].data = bpy.data.armatures[self.BodyArm]
-        self.Childof_Validator()
+        self.BoneVis_Validator()
         
         if Needs_Rest == True:
             bpy.ops.pose.armature_apply(selected=False)
@@ -90,16 +105,6 @@ class LT_BodyShop:
         bpy.data.objects[self.LM].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
 
 
-def Active_Check(ObjName): # norb's hell
-    
-    try:
-        bpy.ops.object.mode_set(mode="OBJECT")
-        bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
-    except RuntimeError:
-        bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
-    
-    bpy.ops.object.select_pattern(pattern=ObjName, extend=False)
-    bpy.ops.object.mode_set(mode="POSE")
 
 #pattern for tuple (PRESET_NAME, SKELENTON)
 class F_PreSets(Enum):
@@ -131,13 +136,16 @@ class LT_OT_set_base_tailor(bpy.types.Operator):
 
     def execute(self, context):
         
-        tailor_props = bpy.context.scene.tailor_props
-        Active_Check(tailor_props.mannequin_form)
+        tailor_props = context.scene.tailor_props
+        LT_active_check.force_active(tailor_props.mannequin_form)
+        bpy.ops.object.mode_set(mode="POSE")
+        
+        # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
         SewingPattern = LT_BodyShop(
             PreSet=("NONE"),
             BodyArm=("LT_" + (tailor_props.from_body) + "_BASE")
             )
-        
+
         SewingPattern.SwapSkeleton(Needs_Rest=True)
   
         return {"FINISHED"}
@@ -151,15 +159,15 @@ class LT_OT_defualt_preset_tailor(bpy.types.Operator):
 
     def execute(self, context):
         
-        tailor_props = bpy.context.scene.tailor_props
-        Active_Check(tailor_props.mannequin_form)
+        tailor_props = context.scene.tailor_props
+        LT_active_check.force_active(tailor_props.mannequin_form)
+        bpy.ops.object.mode_set(mode="POSE")
 
         if tailor_props.from_body == "HUM_M":
             Codebook = M_PreSets[tailor_props.to_body]
         else:
             Codebook = F_PreSets[tailor_props.to_body]
         
-        # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
         SewingPattern = LT_BodyShop(
             
             PreSet=Codebook.value[0], 
@@ -177,9 +185,10 @@ class LT_OT_mannequin_reset(bpy.types.Operator):
     bl_description = "Sets the Mannequin back to a nuteral state"
 
     def execute(self, context):
+        
 
-        Active_Check(bpy.context.scene.tailor_props.mannequin_form)
-
+        LT_active_check.force_active(context.scene.tailor_props.mannequin_form)
+        bpy.ops.object.mode_set(mode="POSE")
         LT_BodyShop(PreSet=("NONE"), BodyArm=("NONE")).FullReset()
         return {"FINISHED"}
 
