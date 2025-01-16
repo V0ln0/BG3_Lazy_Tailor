@@ -51,11 +51,6 @@ class tailor_props(bpy.types.PropertyGroup):
     mannequin_form: bpy.props.StringProperty(name="mannequin_form", default="Local_Mannequin") 
     InitBool: bpy.props.BoolProperty(name="InitBool", default=False) #stops the user from doubleing up assets, todo: add system to refresh blend file's assets
     
-    as_shapekey_ui: bpy.props.BoolProperty(
-        name="As Shapekey",
-        default=False,
-        description="Apply changes as a shapekey rather than finalising the changes."
-        ) 
      
     #might need to move these into a panel prop if we wanna do custom icons
     from_body: bpy.props.EnumProperty(

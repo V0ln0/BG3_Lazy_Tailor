@@ -3,6 +3,7 @@
 import bpy
 import os
 from os import path
+from . LazyTalior_utils import *
 
 LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor", "library", "LazyTalior_Assets.blend")
 
@@ -12,23 +13,6 @@ LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor", 
 # couldn"t do it all at once because the link function wasn't playing nice with Actions, those have to use libraries.load
 # this keeps the whole file much cleaner, but in order for the user to actualy use the anything we have linked over, it has to get "unpacked"
 # as in moved out of the insanced folder, and added to the current scene
-
-
-# checks for a collection, if it exists it returns the collection name. 
-# if it dosen't exist, it creates a new collection with the desried name and returns the new collection
-def LT_ensure_collection(Cname) -> bpy.types.Collection:
-
-    scene = bpy.context.scene
-
-    try:
-        link_to = scene.collection.children[Cname]
-        bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[link_to.name]
-    except KeyError:
-        link_to = bpy.data.collections.new(Cname)
-        scene.collection.children.link(link_to)
-        bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[link_to.name]
-
-    return link_to
 
 
 def LT_LoadCol(AssetCol):
@@ -41,8 +25,7 @@ def LT_LoadCol(AssetCol):
         do_reuse_local_id=True,
         instance_collections=True
         
-        )
-
+        ) 
 
 def LT_MannequinInit():
     
@@ -50,9 +33,14 @@ def LT_MannequinInit():
     LT_LoadCol("LT_DontTouchIsBones")
     bpy.data.objects["LT_DontTouchIsBones"].hide_viewport = True
     
+
     with bpy.data.libraries.load(LT_LibPath) as (data_from, data_to):
         data_to.actions = data_from.actions #todo: store list of appended files to for cleaning up later
-    
+        # for A in data_to.actions:
+        #     bpy.data.actions[A.name].use_fake_user = True
+    for A in data_to.actions:
+        A.use_fake_user = True
+
     Mannequins = []
     for M in bpy.data.objects:
         if M.name.startswith("LT_Mannequin"):

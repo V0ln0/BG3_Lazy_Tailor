@@ -25,8 +25,7 @@ import bpy
 from . LazyTalior_Manager import *
 from . LazyTalior_Closet import *
 from . LazyTalior_Prop import *
-from . LazyTalior_UI_Icons import *
-
+from . LazyTalior_utils import *
 
 
 bl_info = {
@@ -61,6 +60,7 @@ class LT_PT_lazy_panel_parent(LT_scene_master_panel, bpy.types.Panel):
     def draw(self, context):
         
         layout = self.layout
+
         lt_props = context.scene.tailor_props #there's gotta be a better way than writting this out constantly
         
         box = layout.box()
@@ -71,25 +71,36 @@ class LT_PT_lazy_panel_parent(LT_scene_master_panel, bpy.types.Panel):
             row.operator("lt.initialise", text="Initialise")
         else:
             row = box.row()
-            row.label(text="Lazy Talior Status: READY", icon='RADIOBUT_ON') #for get the whole active thing and shove it into one giant if statement. Maybe.
+            row.label(text="Lazy Talior Status: READY", icon='RADIOBUT_ON') 
+
+        col = layout.column()
+        col.enabled = lt_props.InitBool
+        col.label(text="Mannequin Options")
+        col.separator(type='LINE')
+        col.separator(factor=0.5)
+    
+        split = col.split(factor=0.65)
+        
+        prop_col = split.column()
+        prop_col.prop(lt_props, "from_body")
+        prop_col.prop(lt_props, "to_body")
+        
+        op_col = split.column()
+        op_col.operator("lt.set_base_tailor")
+        op_col.operator("lt.defualt_preset_tailor", text="Apply")
+        op_col.operator("lt.mannequin_reset", text="Reset")
+  
 
         
-        row = layout.row()
-        row.label(text="Lazy Talior Status: READY")
-        layout.separator(type='LINE')
-        col = layout.column()
-        col.enabled = lt_props.InitBool
-        grid = col.grid_flow(row_major=True, columns=2)
-        grid.prop(lt_props, "from_body")
-        grid.operator("lt.set_base_tailor")
-        grid.prop(lt_props, "to_body")
-        grid.operator("lt.defualt_preset_tailor", text="Apply")
-        layout.separator(type='LINE')
-        col = layout.column()
-        col.enabled = lt_props.InitBool
-        props = col.operator("lt.apply_refit")
-        props.as_shapekey = lt_props.as_shapekey_ui
-        col.prop(lt_props, "as_shapekey_ui")  
+        col.separator(factor=1.0)
+        col.separator(type='LINE')
+        col.separator(factor=0.25)
+        
+        col.label(text="Mesh Options")
+        col.operator("wm.call_menu", text="Export Order").name = "LT_MT_export_order"
+        col.operator("lt.apply_refit", text="Finalise")
+        
+
 
 class LT_PT_export_helpers_pannel(LT_scene_master_panel, bpy.types.Panel):
     
@@ -108,9 +119,8 @@ class LT_PT_export_helpers_pannel(LT_scene_master_panel, bpy.types.Panel):
         row = layout.row()
         props = row.operator("lt.object_drop", text="Apply")
         props.objname = lt_props.skeleton_name
-        row = layout.row()
-        row.operator("lt.export_order_setter", text="Set Export Order")
 
+        
 
         #todo: mass mesh rename
 
@@ -125,7 +135,6 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
     bl_options = {'DEFAULT_CLOSED'}
     
 
-
     def draw(self, context):
         
         lt_props = context.scene.tailor_props
@@ -135,7 +144,7 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         layout.operator("lt.mannequin_reset")
 
 class LT_PT_mannequin_vis(bpy.types.Panel):
-    
+
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "BG3 LT"
@@ -182,8 +191,10 @@ classes = (
     LT_OT_object_drop,
     LT_OT_export_order_setter,
     LT_OT_apply_refit,
+    LT_MT_export_order,
 
     )
+
 def register():
 
     for _class in classes: 
