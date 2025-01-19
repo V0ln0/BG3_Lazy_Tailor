@@ -47,9 +47,18 @@ class tailor_props(bpy.types.PropertyGroup):
     )
 
     #storing the names here so that if they need to be changed I only have to update the name in one place
-    mannequin_base: bpy.props.StringProperty(name="mannequin_base", default="Local_Mannequin_Base")
-    mannequin_form: bpy.props.StringProperty(name="mannequin_form", default="Local_Mannequin") 
-    InitBool: bpy.props.BoolProperty(name="InitBool", default=False) #stops the user from doubleing up assets, todo: add system to refresh blend file's assets
+    mannequin_base: bpy.props.StringProperty(
+        name="mannequin_base",
+        default="Local_Mannequin_Base"
+        )
+    mannequin_form: bpy.props.StringProperty(
+        name="mannequin_form",
+        default="Local_Mannequin"
+        ) 
+    InitBool: bpy.props.BoolProperty(
+        name="InitBool",
+        default=False
+        ) #stops the user from doubleing up assets, todo: add system to refresh blend file's assets
     
      
     #might need to move these into a panel prop if we wanna do custom icons
@@ -57,7 +66,7 @@ class tailor_props(bpy.types.PropertyGroup):
         name="From",
         description="Name of body that you are converting FROM",
         items=base_body,
-        default=(2),
+        default=(1),
     )
     to_body: bpy.props.EnumProperty(
         name="To",

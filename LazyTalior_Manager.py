@@ -47,7 +47,7 @@ class LT_BodyShop:
                     PN.data.bones.active = b.bone                               
                     bpy.ops.constraint.childof_set_inverse(constraint="Child Of", owner="BONE")
     
-    def stretch_to_mass_set(self):
+    def stretch_to_mass_set(self): #todo: merge this and the above into one
         PN = bpy.data.objects[self.LM]
         for b in PN.pose.bones:
             for c in b.constraints:
@@ -178,14 +178,16 @@ class LT_OT_defualt_preset_tailor(bpy.types.Operator):
         return {"FINISHED"}
 
 
+
+
 class LT_OT_mannequin_reset(bpy.types.Operator):
 
     bl_idname = "lt.mannequin_reset"
     bl_label = "Mannequin Reset"
-    bl_description = "Sets the Mannequin back to a nuteral state"
+    bl_description = "Sets the Mannequin back to its defualt state or clears user changes"
+
 
     def execute(self, context):
-        
 
         LT_active_check.force_active(context.scene.tailor_props.mannequin_form)
         bpy.ops.object.mode_set(mode="POSE")

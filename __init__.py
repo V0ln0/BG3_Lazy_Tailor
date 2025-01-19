@@ -61,11 +61,11 @@ class LT_PT_lazy_panel_parent(LT_scene_master_panel, bpy.types.Panel):
         
         layout = self.layout
 
-        lt_props = context.scene.tailor_props #there's gotta be a better way than writting this out constantly
+        tailor_props = context.scene.tailor_props #there's gotta be a better way than writting this out constantly
         
         box = layout.box()
         
-        if lt_props.InitBool == False: 
+        if tailor_props.InitBool == False: 
             row = box.row()
             row.label(text="Lazy Talior Status: NOT READY", icon='RADIOBUT_OFF')
             row.operator("lt.initialise", text="Initialise")
@@ -74,7 +74,7 @@ class LT_PT_lazy_panel_parent(LT_scene_master_panel, bpy.types.Panel):
             row.label(text="Lazy Talior Status: READY", icon='RADIOBUT_ON') 
 
         col = layout.column()
-        col.enabled = lt_props.InitBool
+        col.enabled = tailor_props.InitBool
         col.label(text="Mannequin Options")
         col.separator(type='LINE')
         col.separator(factor=0.5)
@@ -82,66 +82,117 @@ class LT_PT_lazy_panel_parent(LT_scene_master_panel, bpy.types.Panel):
         split = col.split(factor=0.65)
         
         prop_col = split.column()
-        prop_col.prop(lt_props, "from_body")
-        prop_col.prop(lt_props, "to_body")
+        prop_col.prop(tailor_props, "from_body")
+        prop_col.prop(tailor_props, "to_body")
         
         op_col = split.column()
         op_col.operator("lt.set_base_tailor")
         op_col.operator("lt.defualt_preset_tailor", text="Apply")
         op_col.operator("lt.mannequin_reset", text="Reset")
   
-
         
         col.separator(factor=1.0)
         col.separator(type='LINE')
         col.separator(factor=0.25)
         
         col.label(text="Mesh Options")
-        col.operator("wm.call_menu", text="Export Order").name = "LT_MT_export_order"
-        col.operator("lt.apply_refit", text="Finalise")
+        col.operator("wm.call_menu", text="Export Order").name = "LT_MT_export_order_menu"
+        col.operator("wm.call_menu", text="Finalise").name = "LT_MT_mass_apply_menu"
         
 
 
-class LT_PT_export_helpers_pannel(LT_scene_master_panel, bpy.types.Panel):
+class LT_PT_export_helpers_panel(LT_scene_master_panel, bpy.types.Panel):
     
     bl_label = "Export Helpers"
-    bl_idname = "LT_PT_export_helpers_pannel"
+    bl_idname = "LT_PT_export_helpers_panel"
     bl_parent_id = "LT_PT_lazy_panel_parent"
     bl_order = 0
 
     def draw(self, context):
 
-        lt_props = context.scene.tailor_props
+        tailor_props = context.scene.tailor_props
         layout = self.layout
-        layout.enabled = lt_props.InitBool
+        layout.enabled = tailor_props.InitBool
         col = layout.column(heading='BONEZONE')
-        col.prop(lt_props, "skeleton_name")
+        col.prop(tailor_props, "skeleton_name")
         row = layout.row()
         props = row.operator("lt.object_drop", text="Apply")
-        props.objname = lt_props.skeleton_name
+        props.objname = tailor_props.skeleton_name
 
         
+class LT_PT_lod_factory_panel(LT_scene_master_panel, bpy.types.Panel):
+    
+    bl_label = "LOD factory"
+    bl_idname = "LT_PT_lod_factory_panel"
+    bl_parent_id = "LT_PT_lazy_panel_parent"
+    bl_order = 1
+    bl_options = {'DEFAULT_CLOSED'}
 
-        #todo: mass mesh rename
+    def draw(self, context):
+            
+            tailor_props = context.scene.tailor_props
+            layout = self.layout
+            layout.enabled = tailor_props.InitBool
+            
+
+            col = layout.column(align=True)
+            split = col.split(factor=0.5)
+
+            col_A = split.column()
+            col_A.label(text="Set LODs")
+
+            # props = col_A.operator("lt.create_lod", text="LOD0")
+            # props.level_int = 0
+            # props.no_LOD = True
+            
+            props = col_A.operator("lt.create_lod", text="LOD1")
+            props.level_int = 1
+            props.no_LOD = True
+
+            props = col_A.operator("lt.create_lod", text="LOD2")
+            props.level_int = 2
+            props.no_LOD = True
+            
+            props = col_A.operator("lt.create_lod", text="LOD3")
+            props.level_int = 3
+            props.no_LOD = True
+
+            props = col_A.operator("lt.create_lod", text="LOD4")
+            props.level_int = 4
+            props.no_LOD = True
 
 
+            col_B = split.column()
+            col_B.label(text="Create LODs")
+
+
+            col_B.operator("lt.create_lod", text="LOD1").level_int = 1
+            col_B.operator("lt.create_lod", text="LOD2").level_int = 2
+            col_B.operator("lt.create_lod", text="LOD3").level_int = 3
+            col_B.operator("lt.create_lod", text="LOD4").level_int = 4
+            layout.separator()
+            row = layout.row()
+            row.alignment = 'CENTER'
+            row.operator("lt.create_lod", text="Reset").reset_LOD = True
+            row.operator("lt.create_lod", text="LOD0").level_int = 0
+            
 
 class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
     
     bl_label = "Utility"
     bl_idname = "LT_PT_utility_panel"
     bl_parent_id = "LT_PT_lazy_panel_parent"
-    bl_order = 1
+    bl_order = 2
     bl_options = {'DEFAULT_CLOSED'}
     
 
     def draw(self, context):
         
-        lt_props = context.scene.tailor_props
+        tailor_props = context.scene.tailor_props
         layout = self.layout
-        layout.enabled = lt_props.InitBool
+        layout.enabled = tailor_props.InitBool
+        
 
-        layout.operator("lt.mannequin_reset")
 
 class LT_PT_mannequin_vis(bpy.types.Panel):
 
@@ -186,12 +237,16 @@ classes = (
     LT_OT_mannequin_reset,
     LT_OT_set_base_tailor,
     LT_PT_mannequin_vis,
-    LT_PT_export_helpers_pannel,
+    LT_PT_export_helpers_panel,
     LT_PT_utility_panel,
     LT_OT_object_drop,
     LT_OT_export_order_setter,
-    LT_OT_apply_refit,
-    LT_MT_export_order,
+    LT_OT_mass_apply_modifier,
+    LT_MT_mass_apply_menu,
+    LT_MT_export_order_menu,
+    LT_OT_create_lod,
+    LT_PT_lod_factory_panel,
+
 
     )
 

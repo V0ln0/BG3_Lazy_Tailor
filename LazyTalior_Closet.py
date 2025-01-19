@@ -5,7 +5,7 @@ import os
 from os import path
 from . LazyTalior_utils import *
 
-LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor", "library", "LazyTalior_Assets.blend")
+LT_LibPath = os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor", "library", "LazyTalior_Supply_Closet.blend")
 
 
 # this file used to be so much longer....

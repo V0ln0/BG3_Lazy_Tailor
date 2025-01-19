@@ -1,9 +1,8 @@
 
+*.blend
 *.blend1
 .vscode/settings.json
 *.pyc
-*.blend
 library/blender_assets.cats.txt
-library/LazyTalior_Assets.blend
 library/blender_assets.cats.txt~
-*.blend
+
