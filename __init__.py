@@ -61,7 +61,7 @@ class LT_PT_lazy_panel_parent(LT_scene_master_panel, bpy.types.Panel):
         
         layout = self.layout
 
-        tailor_props = context.scene.tailor_props #there's gotta be a better way than writting this out constantly
+        tailor_props = bpy.context.scene.tailor_props #there's gotta be a better way than writting this out constantly
         
         box = layout.box()
         
@@ -98,7 +98,7 @@ class LT_PT_lazy_panel_parent(LT_scene_master_panel, bpy.types.Panel):
         col.label(text="Mesh Options")
         col.operator("wm.call_menu", text="Export Order").name = "LT_MT_export_order_menu"
         col.operator("wm.call_menu", text="Finalise").name = "LT_MT_mass_apply_menu"
-        
+        col.operator("lt.so_no_head", text="Head_M")
 
 
 class LT_PT_export_helpers_panel(LT_scene_master_panel, bpy.types.Panel):
@@ -108,13 +108,15 @@ class LT_PT_export_helpers_panel(LT_scene_master_panel, bpy.types.Panel):
     bl_parent_id = "LT_PT_lazy_panel_parent"
     bl_order = 0
 
+
     def draw(self, context):
 
-        tailor_props = context.scene.tailor_props
+        tailor_props = bpy.context.scene.tailor_props
         layout = self.layout
         layout.enabled = tailor_props.InitBool
         col = layout.column(heading='BONEZONE')
         col.prop(tailor_props, "skeleton_name")
+        col.prop(self, "skeleton_name")
         row = layout.row()
         props = row.operator("lt.object_drop", text="Apply")
         props.objname = tailor_props.skeleton_name
@@ -130,51 +132,50 @@ class LT_PT_lod_factory_panel(LT_scene_master_panel, bpy.types.Panel):
 
     def draw(self, context):
             
-            tailor_props = context.scene.tailor_props
-            layout = self.layout
-            layout.enabled = tailor_props.InitBool
+        tailor_props = bpy.context.scene.tailor_props
+        layout = self.layout
+        layout.enabled = tailor_props.InitBool
+        
+
+        col = layout.column()
+        split = col.split(factor=0.5)
+
+        col_A = split.column()
+        col_A.label(text="Set LODs:")
+        
+        props = col_A.operator('lt.create_lod', text="LOD1")
+        props.level_int = 1
+        props.new_mesh = False
+
+        props = col_A.operator('lt.create_lod', text="LOD2")
+        props.level_int = 2
+        props.new_mesh = False
+        
+        props = col_A.operator('lt.create_lod', text="LOD3")
+        props.level_int = 3
+        props.new_mesh = False
+
+        props = col_A.operator('lt.create_lod', text="LOD4")
+        props.level_int = 4
+        props.new_mesh = False
+
+
+        col_B = split.column()
+        col_B.label(text="Create LODs:")
+
+        col_B.operator('lt.create_lod', text="LOD1").level_int = 1
+        col_B.operator('lt.create_lod', text="LOD2").level_int = 2
+        col_B.operator('lt.create_lod', text="LOD3").level_int = 3
+        col_B.operator('lt.create_lod', text="LOD4").level_int = 4
+        
+        layout.separator(type='LINE')
+        col = layout.column()
+        col.label(text="LOD Utility:")
+
+        row = layout.row()
+        row.operator('lt.create_lod', text="Clear").level_int = 5
+        row.operator('lt.create_lod', text="LOD0").level_int = 0
             
-
-            col = layout.column(align=True)
-            split = col.split(factor=0.5)
-
-            col_A = split.column()
-            col_A.label(text="Set LODs")
-
-            # props = col_A.operator("lt.create_lod", text="LOD0")
-            # props.level_int = 0
-            # props.no_LOD = True
-            
-            props = col_A.operator("lt.create_lod", text="LOD1")
-            props.level_int = 1
-            props.no_LOD = True
-
-            props = col_A.operator("lt.create_lod", text="LOD2")
-            props.level_int = 2
-            props.no_LOD = True
-            
-            props = col_A.operator("lt.create_lod", text="LOD3")
-            props.level_int = 3
-            props.no_LOD = True
-
-            props = col_A.operator("lt.create_lod", text="LOD4")
-            props.level_int = 4
-            props.no_LOD = True
-
-
-            col_B = split.column()
-            col_B.label(text="Create LODs")
-
-
-            col_B.operator("lt.create_lod", text="LOD1").level_int = 1
-            col_B.operator("lt.create_lod", text="LOD2").level_int = 2
-            col_B.operator("lt.create_lod", text="LOD3").level_int = 3
-            col_B.operator("lt.create_lod", text="LOD4").level_int = 4
-            layout.separator()
-            row = layout.row()
-            row.alignment = 'CENTER'
-            row.operator("lt.create_lod", text="Reset").reset_LOD = True
-            row.operator("lt.create_lod", text="LOD0").level_int = 0
             
 
 class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
@@ -188,10 +189,11 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
 
     def draw(self, context):
         
-        tailor_props = context.scene.tailor_props
+        tailor_props = bpy.context.scene.tailor_props
         layout = self.layout
         layout.enabled = tailor_props.InitBool
         
+
 
 
 class LT_PT_mannequin_vis(bpy.types.Panel):
@@ -218,14 +220,10 @@ class LT_PT_mannequin_vis(bpy.types.Panel):
             box = layout.box()
             grid = box.grid_flow(row_major=True, columns=2, even_columns=True)
 
-            grid.prop(mannequin_data.collections["CTRL_Torso_Main"], "is_visible", text="Torso Main", toggle=True)
-            grid.prop(mannequin_data.collections["CTRL_Torso_Extra"], "is_visible", text="Torso Extra", toggle=True)
-            grid.prop(mannequin_data.collections["CTRL_Arms_Main"], "is_visible", text="Arms Main", toggle=True)            
-            grid.prop(mannequin_data.collections["CTRL_Arms_Extra"], "is_visible", text="Arms Extra", toggle=True)
-            grid.prop(mannequin_data.collections["CTRL_Hands_Main"], "is_visible", text="Hands Main", toggle=True)            
-            grid.prop(mannequin_data.collections["CTRL_Hands_Extra"], "is_visible", text="Hands Extra", toggle=True)
-            grid.prop(mannequin_data.collections["CTRL_Legs_Main"], "is_visible", text="Legs Main", toggle=True)
-            grid.prop(mannequin_data.collections["CTRL_Legs_Extra"], "is_visible", text="Legs Extra", toggle=True)
+            grid.prop(mannequin_data.collections["CTRL_Torso"], "is_visible", text="Torso Main", toggle=True)
+            grid.prop(mannequin_data.collections["CTRL_Arms"], "is_visible", text="Arms Main", toggle=True)            
+            grid.prop(mannequin_data.collections["CTRL_Hands"], "is_visible", text="Hands Main", toggle=True)            
+            grid.prop(mannequin_data.collections["CTRL_Legs"], "is_visible", text="Legs Main", toggle=True)
 
 
 classes = (
@@ -246,7 +244,7 @@ classes = (
     LT_MT_export_order_menu,
     LT_OT_create_lod,
     LT_PT_lod_factory_panel,
-
+    LT_OT_so_no_head,
 
     )
 

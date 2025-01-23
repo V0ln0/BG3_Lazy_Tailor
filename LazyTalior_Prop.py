@@ -60,7 +60,6 @@ class tailor_props(bpy.types.PropertyGroup):
         default=False
         ) #stops the user from doubleing up assets, todo: add system to refresh blend file's assets
     
-     
     #might need to move these into a panel prop if we wanna do custom icons
     from_body: bpy.props.EnumProperty(
         name="From",
@@ -86,6 +85,8 @@ class tailor_props(bpy.types.PropertyGroup):
         items=skeleton_types,
         default=(1)
     )
+
+
 
 # https://docs.blender.org/api/4.3/bpy.props.html#propertygroup-example
 # https://docs.blender.org/api/4.3/bpy.types.UILayout.html#bpy.types.UILayout

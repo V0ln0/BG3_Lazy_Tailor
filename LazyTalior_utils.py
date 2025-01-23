@@ -76,8 +76,6 @@ class LT_MT_export_order_menu(bpy.types.Menu):
 
         layout.operator("lt.export_order_setter", text="Mannequin Children").selected = False
         layout.operator("lt.export_order_setter", text="Selected Objects").selected = True
-        # layout.operator("lt.export_order_setter", text="Of Children", description="Sets the export order of Local_Mannequin's children.").selected = False
-        # layout.operator("lt.export_order_setter", text="Of Selected", description="Sets the export order of all selected mesh objects").selected = True
 
 def LT_select_children(Parent):
 
@@ -143,7 +141,7 @@ class LT_MT_mass_apply_menu(bpy.types.Menu):
 
 class lod_codebook():
     
-    LOD_def = Enum('LOD_def', [('LOD0', 0), ('LOD1', 1), ('LOD2', 2), ('LOD3', 3), ('LOD4', 4)])
+    LOD_def = Enum('LOD_def', [('LOD0', 0), ('LOD1', 1), ('LOD2', 2), ('LOD3', 3), ('LOD4', 4), ('CLEAR', 5)])
 
     LOD_dict = {
         #values taken of GTY_M_NKD_Body, hope they're universal lol
@@ -153,6 +151,7 @@ class lod_codebook():
         "LOD2": (2, 23, 0.25),
         "LOD3": (3, 30, 0.1),
         "LOD4": (4, 0, 0.03),
+        "CLEAR": (0, 0, 0),
 
     }
 
@@ -165,26 +164,19 @@ class LT_OT_create_lod(bpy.types.Operator):
     # "Let's go. In and out. 20 minute operator" this was h e l l
     bl_idname = "lt.create_lod"
     bl_label = "create LOD"
-    bl_description = "Creates a LOD of the selected mesh"
+    bl_description = "Creates or sets the LOD of a selected mesh"
 
     level_int: bpy.props.IntProperty(
         name="level_int",
         default=0,
         min=0,
-        max=4,
+        max=5,
     )
 
-    no_LOD: bpy.props.BoolProperty(
-        name="no_LOD",
-        default=False
+    new_mesh: bpy.props.BoolProperty(
+        name="new_mesh",
+        default=True
     ) #sets the LOD level and distance without creating a new mesh 
-    #TODO:  not working :<
-    
-
-    reset_LOD: bpy.props.BoolProperty(
-        name="reset_LOD",
-        default=False
-    ) #just resets both the level and the distance to 0
 
 
     def set_LOD(self, obj, level, distance):
@@ -212,41 +204,55 @@ class LT_OT_create_lod(bpy.types.Operator):
         return newLOD
 
     
-    
     def execute(self, context):
         
         active_obj = bpy.context.view_layer.objects.active
         
         if active_obj.type == 'MESH':
-            if self.reset_LOD == True: 
-                self.set_LOD(active_obj, 0, 0)
+
+            LOD = lod_codebook().get_LOD(LOD_value=self.level_int)
+            
+            if self.level_int in tuple((0, 5)):
+
+                self.set_LOD(active_obj, LOD[0], LOD[1])
+                #LOD0 never needs to create a new mesh, be decimated, or renamed. The same is true for clearing the LOD values
+            
             else:
-                LOD = lod_codebook().get_LOD(LOD_value=self.level_int)
                 
-                if self.level_int == 0:
-                    
+                if self.new_mesh == False:
                     self.set_LOD(active_obj, LOD[0], LOD[1])
+                    bpy.ops.object.modifier_add(type='DECIMATE')
+                    active_obj.modifiers["Decimate"].ratio = LOD[2]
                 
                 else:
-                    
-                    if self.no_LOD == True:
-                        self.set_LOD(active_obj, LOD[0], LOD[1])
-                        bpy.ops.object.modifier_add(type='DECIMATE')
-                        active_obj.modifiers["Decimate"].ratio = LOD[2]
-                    
-                    else:
-                        created_LOD = self.create_LOD(active_obj)
-                        self.set_LOD(created_LOD, LOD[0], LOD[1])
-                        bpy.ops.object.modifier_add(type='DECIMATE')
-                        created_LOD.modifiers["Decimate"].ratio = LOD[2]
-                        bpy.context.view_layer.objects.active = active_obj
+                    created_LOD = self.create_LOD(active_obj)
+                    self.set_LOD(created_LOD, LOD[0], LOD[1])
+                    bpy.ops.object.modifier_add(type='DECIMATE')
+                    created_LOD.modifiers["Decimate"].ratio = LOD[2]
+                    bpy.context.view_layer.objects.active = active_obj
 
         return {"FINISHED"}
 
-# to do: opperator for corrective smooth
+
+class LT_OT_so_no_head(bpy.types.Operator):
+    
+    bl_idname = "lt.so_no_head"
+    bl_label = "create Head_M"
+    bl_description = "Creates the 'Head_M' vertex group on the active object and sets it's weight to 1.0"
 
 
+    def so_head(self):
+        try:
+            Head_M = bpy.context.active_object.vertex_groups["Head_M"]
+            return Head_M
+        except KeyError:
+            Head_M = bpy.context.active_object.vertex_groups.new(name='Head_M')
+            return Head_M
 
-#print(dir(bpy.data.objects["Local_Mannequin"]))
+    def execute(self, context):
 
-#print(getattr(bpy.data.objects["Local_Mannequin"], 'children'))
+        Head_M = self.so_head()
+        Verts = [i.index for i in bpy.context.active_object.data.vertices]
+        Head_M.add(Verts, 1.0, 'ADD')
+        
+        return {"FINISHED"}
