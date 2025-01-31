@@ -42,6 +42,30 @@ bl_info = {
     "category": "Meshes"
     }
 
+class tailor_AddonPreferences(bpy.types.AddonPreferences):
+    
+    bl_idname = __name__
+
+    user_lib_path: bpy.props.StringProperty(
+        name="User Library Path",
+        subtype='FILE_PATH',
+        default='',
+        description="Location of a Blend file that you wish to store custom pre-sets in."
+    )
+
+    volno_debug: bpy.props.BoolProperty(
+        name="Volno's debug Tools",
+        default=False,
+        description="Enables debuging tools, HANDS OFF UNLESS YOU KNOW WHAT YOU'RE DOING"
+    )
+    
+    def draw(self, context):
+        
+        layout = self.layout
+        layout.label(text="BG3 Lazy Tailor AddonPreferences")
+        layout.prop(self, "user_lib_path")
+        layout.prop(self, "volno_debug")
+
 
 
 class LT_scene_master_panel:
@@ -89,39 +113,35 @@ class LT_PT_lazy_panel_parent(LT_scene_master_panel, bpy.types.Panel):
         op_col.operator("lt.set_base_tailor")
         op_col.operator("lt.defualt_preset_tailor", text="Apply")
         op_col.operator("lt.mannequin_reset", text="Reset")
-  
-        
-        col.separator(factor=1.0)
+        row = col.row()
+        row.alignment = 'LEFT'
+        row.operator("wm.call_menu", text="Finalise").name = "LT_MT_mass_apply_menu"
         col.separator(type='LINE')
-        col.separator(factor=0.25)
+        col.prop(context.scene, "lt_actions")
+
+
         
-        col.label(text="Mesh Options")
-        col.operator("wm.call_menu", text="Export Order").name = "LT_MT_export_order_menu"
-        col.operator("wm.call_menu", text="Finalise").name = "LT_MT_mass_apply_menu"
-        col.operator("lt.so_no_head", text="Head_M")
-
-
-class LT_PT_export_helpers_panel(LT_scene_master_panel, bpy.types.Panel):
+class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
     
-    bl_label = "Export Helpers"
-    bl_idname = "LT_PT_export_helpers_panel"
+    bl_label = "Utility"
+    bl_idname = "LT_PT_utility_panel"
     bl_parent_id = "LT_PT_lazy_panel_parent"
     bl_order = 0
-
+    bl_options = {'DEFAULT_CLOSED'}
+    
 
     def draw(self, context):
-
+        
         tailor_props = bpy.context.scene.tailor_props
+
         layout = self.layout
         layout.enabled = tailor_props.InitBool
-        col = layout.column(heading='BONEZONE')
-        col.prop(tailor_props, "skeleton_name")
-        col.prop(self, "skeleton_name")
-        row = layout.row()
-        props = row.operator("lt.object_drop", text="Apply")
-        props.objname = tailor_props.skeleton_name
+        layout.label(text="Mesh Options")
+        layout.operator("wm.call_menu", text="Set Export Order").name = "LT_MT_export_order_menu"
+        layout.operator("lt.so_no_head", text="Create Head_M")
+        layout.prop_search(bpy.context.scene,)
+  
 
-        
 class LT_PT_lod_factory_panel(LT_scene_master_panel, bpy.types.Panel):
     
     bl_label = "LOD factory"
@@ -136,64 +156,9 @@ class LT_PT_lod_factory_panel(LT_scene_master_panel, bpy.types.Panel):
         layout = self.layout
         layout.enabled = tailor_props.InitBool
         
-
         col = layout.column()
-        split = col.split(factor=0.5)
-
-        col_A = split.column()
-        col_A.label(text="Set LODs:")
-        
-        props = col_A.operator('lt.create_lod', text="LOD1")
-        props.level_int = 1
-        props.new_mesh = False
-
-        props = col_A.operator('lt.create_lod', text="LOD2")
-        props.level_int = 2
-        props.new_mesh = False
-        
-        props = col_A.operator('lt.create_lod', text="LOD3")
-        props.level_int = 3
-        props.new_mesh = False
-
-        props = col_A.operator('lt.create_lod', text="LOD4")
-        props.level_int = 4
-        props.new_mesh = False
-
-
-        col_B = split.column()
-        col_B.label(text="Create LODs:")
-
-        col_B.operator('lt.create_lod', text="LOD1").level_int = 1
-        col_B.operator('lt.create_lod', text="LOD2").level_int = 2
-        col_B.operator('lt.create_lod', text="LOD3").level_int = 3
-        col_B.operator('lt.create_lod', text="LOD4").level_int = 4
-        
-        layout.separator(type='LINE')
-        col = layout.column()
-        col.label(text="LOD Utility:")
-
-        row = layout.row()
-        row.operator('lt.create_lod', text="Clear").level_int = 5
-        row.operator('lt.create_lod', text="LOD0").level_int = 0
-            
-            
-
-class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
-    
-    bl_label = "Utility"
-    bl_idname = "LT_PT_utility_panel"
-    bl_parent_id = "LT_PT_lazy_panel_parent"
-    bl_order = 2
-    bl_options = {'DEFAULT_CLOSED'}
-    
-
-    def draw(self, context):
-        
-        tailor_props = bpy.context.scene.tailor_props
-        layout = self.layout
-        layout.enabled = tailor_props.InitBool
-        
-
+        col.operator("wm.call_menu", text="Create LODs").name = "LT_MT_create_lod_menu"
+        col.operator("wm.call_menu", text="Set LODs").name = "LT_MT_set_lod_menu"
 
 
 class LT_PT_mannequin_vis(bpy.types.Panel):
@@ -207,11 +172,10 @@ class LT_PT_mannequin_vis(bpy.types.Panel):
     def draw(self, context):
 
         layout = self.layout
-        mannequin_obj = bpy.data.objects[bpy.context.scene.tailor_props.mannequin_form]
-        mannequin_data = bpy.data.armatures[bpy.context.scene.tailor_props.mannequin_form]
+        mannequin_obj = bpy.data.objects['Local_Mannequin']
+        mannequin_data = bpy.data.armatures['Local_Mannequin']
 
         if context.active_object is not mannequin_obj:
- 
             pass
 
         else:
@@ -226,25 +190,29 @@ class LT_PT_mannequin_vis(bpy.types.Panel):
             grid.prop(mannequin_data.collections["CTRL_Legs"], "is_visible", text="Legs Main", toggle=True)
 
 
+
 classes = (
 
     LT_PT_lazy_panel_parent,
     LT_OT_initialise,
     LT_OT_defualt_preset_tailor,
     tailor_props,
+    tailor_AddonPreferences,
     LT_OT_mannequin_reset,
     LT_OT_set_base_tailor,
     LT_PT_mannequin_vis,
-    LT_PT_export_helpers_panel,
     LT_PT_utility_panel,
-    LT_OT_object_drop,
     LT_OT_export_order_setter,
     LT_OT_mass_apply_modifier,
     LT_MT_mass_apply_menu,
     LT_MT_export_order_menu,
     LT_OT_create_lod,
     LT_PT_lod_factory_panel,
+    LT_MT_create_lod_menu,
+    LT_MT_set_lod_menu,
     LT_OT_so_no_head,
+    LT_OT_save_user_presets,
+
 
     )
 

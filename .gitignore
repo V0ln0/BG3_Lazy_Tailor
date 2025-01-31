@@ -6,3 +6,5 @@
 library/blender_assets.cats.txt
 library/blender_assets.cats.txt~
 
+TESTING.py
+*.pyc

@@ -46,15 +46,6 @@ class tailor_props(bpy.types.PropertyGroup):
         ("DWR", "Dwarf", "Diggy Diggy Hole", 10)
     )
 
-    #storing the names here so that if they need to be changed I only have to update the name in one place
-    mannequin_base: bpy.props.StringProperty(
-        name="mannequin_base",
-        default="Local_Mannequin_Base"
-        )
-    mannequin_form: bpy.props.StringProperty(
-        name="mannequin_form",
-        default="Local_Mannequin"
-        ) 
     InitBool: bpy.props.BoolProperty(
         name="InitBool",
         default=False
@@ -88,9 +79,26 @@ class tailor_props(bpy.types.PropertyGroup):
 
 
 
+
+
 # https://docs.blender.org/api/4.3/bpy.props.html#propertygroup-example
 # https://docs.blender.org/api/4.3/bpy.types.UILayout.html#bpy.types.UILayout
 # https://blender.stackexchange.com/questions/160883/contextually-grey-out-panel-element-in-python-2-8
 # https://www.programcreek.com/python/example/83073/bpy.props.EnumProperty
 # https://blenderartists.org/t/add-remove-enumproperty-items/1305166
 
+
+# "LT_HUM_MS_BDY"
+# "LT_HUM_M_MTF"
+# "LT_HUM_FS_BDY"
+# "LT_HUM_F_FTM"
+# "LT_HFL_M_BDY"
+# "LT_HFL_F_BDY"
+# "LT_GTY_M_BDY"
+# "LT_GTY_F_BDY"
+# "LT_GNO_M_BDY"
+# "LT_GNO_F_BDY"
+# "LT_DWR_M_BDY"
+# "LT_DWR_F_BDY"
+# "LT_DGB_M_BDY"
+# "LT_DGB_F_BDY"

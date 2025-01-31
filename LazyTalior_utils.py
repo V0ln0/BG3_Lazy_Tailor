@@ -4,6 +4,8 @@ import bpy
 import enum
 from enum import Enum
 
+
+
 # checks for a collection, if it exists it returns the collection name. 
 # if it dosen't exist, it creates a new collection with the desried name and returns the new collection
 def LT_ensure_collection(Cname) -> bpy.types.Collection:
@@ -23,7 +25,7 @@ def LT_ensure_collection(Cname) -> bpy.types.Collection:
 
 class LT_active_check:
 
-    def force_active(ObjName): # norb's hell
+    def force_active(ObjName='Local_Mannequin'): # norb's hell
         
         try:
             bpy.ops.object.mode_set(mode="OBJECT")
@@ -46,9 +48,10 @@ class LT_OT_export_order_setter(bpy.types.Operator):
     ) 
  
     def execute(self, context):
-        
+
+
         if self.selected == False:
-            con = bpy.data.objects["Local_Mannequin"].children
+            con = bpy.data.objects['Local_Mannequin'].children
         else:
             con = context.selected_objects
         
@@ -105,17 +108,17 @@ class LT_OT_mass_apply_modifier(bpy.types.Operator):
     ) 
     
     def execute(self, context):
+
         
         try:
             bpy.ops.object.mode_set(mode="OBJECT")
         except RuntimeError:
             pass        
         
-        tailor_props = context.scene.tailor_props
+
         meshes = bpy.context.selected_objects
-        
         if self.for_selected == False:
-           meshes = LT_select_children(bpy.data.objects[tailor_props.mannequin_form])
+           meshes = LT_select_children(bpy.data.objects['Local_Mannequin'])
 
         for C in meshes:
             if C.type == "MESH":
@@ -152,7 +155,6 @@ class lod_codebook():
         "LOD3": (3, 30, 0.1),
         "LOD4": (4, 0, 0.03),
         "CLEAR": (0, 0, 0),
-
     }
 
     def get_LOD(self, LOD_value):
@@ -233,6 +235,48 @@ class LT_OT_create_lod(bpy.types.Operator):
 
         return {"FINISHED"}
 
+class LT_MT_create_lod_menu(bpy.types.Menu):
+        
+    bl_idname = "LT_MT_create_lod_menu"
+    bl_label = "Create LOD..."
+    
+    def draw(self, context):
+        
+        layout = self.layout
+        layout.operator('lt.create_lod', text="LOD1").level_int = 1
+        layout.operator('lt.create_lod', text="LOD2").level_int = 2
+        layout.operator('lt.create_lod', text="LOD3").level_int = 3
+        layout.operator('lt.create_lod', text="LOD4").level_int = 4
+
+class LT_MT_set_lod_menu(bpy.types.Menu):
+        
+    bl_idname = "LT_MT_set_lod_menu"
+    bl_label = "Set LOD..."
+    
+    def draw(self, context):
+        
+        layout = self.layout
+
+        layout.operator('lt.create_lod', text="LOD0").level_int = 0
+        
+        props = layout.operator('lt.create_lod', text="LOD1")
+        props.level_int = 1
+        props.new_mesh = False
+
+        props = layout.operator('lt.create_lod', text="LOD2")
+        props.level_int = 2
+        props.new_mesh = False
+        
+        props = layout.operator('lt.create_lod', text="LOD3")
+        props.level_int = 3
+        props.new_mesh = False
+
+        props = layout.operator('lt.create_lod', text="LOD4")
+        props.level_int = 4
+        props.new_mesh = False
+        
+        layout.operator('lt.create_lod', text="Reset LOD").level_int = 5
+
 
 class LT_OT_so_no_head(bpy.types.Operator):
     
@@ -251,8 +295,13 @@ class LT_OT_so_no_head(bpy.types.Operator):
 
     def execute(self, context):
 
-        Head_M = self.so_head()
-        Verts = [i.index for i in bpy.context.active_object.data.vertices]
-        Head_M.add(Verts, 1.0, 'ADD')
+        if bpy.context.active_object.type == 'MESH':
+            Head_M = self.so_head()
+            Verts = [i.index for i in bpy.context.active_object.data.vertices]
+            Head_M.add(Verts, 1.0, 'ADD')
+        else:
+            pass
         
         return {"FINISHED"}
+    
+
