@@ -1,4 +1,6 @@
 import bpy
+import os
+from os import path
 
 
 class tailor_props(bpy.types.PropertyGroup):
@@ -22,14 +24,14 @@ class tailor_props(bpy.types.PropertyGroup):
     
     skeleton_types = (
         
-        ("LT_HUM_F", "Human(Fem)", "Fits body type 1(BT1) races & fem Githyanki.", 1),
-        ("LT_HUM_M", "Human(Masc)", "Fits body type 2(BT2) races & masc Githyanki.", 2),
-        ("LT_HUM_FS", "Human(Fem strong)", "Fits body type 3(BT3) races + fem Dragonborn & Half-Orcs", 3),
-        ("LT_HUM_MS", "Human(Masc strong)", "Fits body type 4(BT4) races + masc Dragonborn & Half-Orcs", 4),
-        ("LT_SHORT_F", "Short(Fem)", "Fits fem Gnomes and Halflings", 5),
-        ("LT_SHORT_M", "Short(Masc)", "Fits masc Gnomes and Halflings", 6),
-        ("LT_DWR_F", "Dwarf(Fem)", "Fits fem Dwarves", 7),
-        ("LT_DWR_F", "Dwarf(Masc)", "Fits masc Dwarves", 8),
+        ("LT_HUM_F", "HUM_F", "Fits body type 1(BT1) races & fem Githyanki.", 1),
+        ("LT_HUM_M", "HUM_M", "Fits body type 2(BT2) races & masc Githyanki.", 2),
+        ("LT_HUM_FS", "HUM_FS", "Fits body type 3(BT3) races + fem Dragonborn & Half-Orcs", 3),
+        ("LT_HUM_MS", "HUM_MS", "Fits body type 4(BT4) races + masc Dragonborn & Half-Orcs", 4),
+        ("LT_SHORT_F", "SHORT_F", "Fits fem Gnomes and Halflings", 5),
+        ("LT_SHORT_M", "SHORT_M", "Fits masc Gnomes and Halflings", 6),
+        ("LT_DWR_F", "DWR_F", "Fits fem Dwarves", 7),
+        ("LT_DWR_M", "DWR_M", "Fits masc Dwarves", 8),
     )    
 
     race_list = (
@@ -70,12 +72,21 @@ class tailor_props(bpy.types.PropertyGroup):
         items=race_list,
         default=(1)
     )
-    skeleton_name: bpy.props.EnumProperty(
-        name="skeleton type",
+    
+    gilf_bones: bpy.props.EnumProperty(
+        name="GR2 skeleton",
         description="Export ready skeleton.",
         items=skeleton_types,
         default=(1)
     )
+
+    LibPath: bpy.props.StringProperty(
+        name="LibPath",
+        subtype='FILE_PATH',
+        default=(os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor", "library", "LazyTalior_Supply_Closet.blend")),
+        description="names of actions imported into the file"
+    )
+
 
 
 

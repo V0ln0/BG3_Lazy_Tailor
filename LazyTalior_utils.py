@@ -5,9 +5,9 @@ import enum
 from enum import Enum
 
 
-
 # checks for a collection, if it exists it returns the collection name. 
 # if it dosen't exist, it creates a new collection with the desried name and returns the new collection
+
 def LT_ensure_collection(Cname) -> bpy.types.Collection:
 
     scene = bpy.context.scene
@@ -23,6 +23,17 @@ def LT_ensure_collection(Cname) -> bpy.types.Collection:
     return link_to
 
 
+def LT_Error_Popup(pop_title: str, error_reason: str, suggestion: str):
+
+    def draw(self, context):
+       
+        self.layout.label(text=error_reason)
+        self.layout.label(text=suggestion)
+        
+    bpy.context.window_manager.popup_menu(draw, title = pop_title, icon = 'ERROR')
+
+
+#why did I make this a class? bleh who knows, i'm not changing it now
 class LT_active_check:
 
     def force_active(ObjName='Local_Mannequin'): # norb's hell
@@ -34,6 +45,48 @@ class LT_active_check:
             bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
         
         bpy.ops.object.select_pattern(pattern=ObjName, extend=False)
+
+
+def LT_reset_confirm_Popup(do_that: str, op_name: str, extra: bool, extra_con: str): 
+
+    def draw(self, context):
+       self.layout.label(text=f"Are you sure that you wish to {do_that}?")
+       if extra == True:
+           self.layout.label(text=extra_con)
+       self.layout.operator(op_name, text= "Yes, do it.")
+        
+    bpy.context.window_manager.popup_menu(draw, title = "Confirm Choice", icon = 'QUESTION')
+
+class LT_OT_confirm_choice(bpy.types.Operator):
+    
+    bl_idname = "lt.confirm_choice"
+    bl_label = "confirm_choice"
+    bl_description = "*John Cena voice* are you sure about that?"
+      
+    the_thing: bpy.props.StringProperty(
+        name="the_thing",
+        default="If you're reading this, I forgot to set it",
+    )
+    
+    warn_extra: bpy.props.BoolProperty(
+        name="warn_extra",
+        default=False
+    )
+
+    warn_message: bpy.props.StringProperty(
+        name="op_name",
+        default="If you're reading this, I forgot to set TWO things",
+    )
+
+    op_name: bpy.props.StringProperty(
+        name="op_name",
+        default="",
+    )
+
+    def execute(self, context):
+        LT_reset_confirm_Popup((self.the_thing), (self.op_name), (self.warn_extra), (self.warn_extra))
+        return {"FINISHED"}
+
 
 class LT_OT_export_order_setter(bpy.types.Operator):
     
@@ -115,7 +168,6 @@ class LT_OT_mass_apply_modifier(bpy.types.Operator):
         except RuntimeError:
             pass        
         
-
         meshes = bpy.context.selected_objects
         if self.for_selected == False:
            meshes = LT_select_children(bpy.data.objects['Local_Mannequin'])
@@ -211,21 +263,16 @@ class LT_OT_create_lod(bpy.types.Operator):
         active_obj = bpy.context.view_layer.objects.active
         
         if active_obj.type == 'MESH':
-
             LOD = lod_codebook().get_LOD(LOD_value=self.level_int)
             
             if self.level_int in tuple((0, 5)):
-
                 self.set_LOD(active_obj, LOD[0], LOD[1])
                 #LOD0 never needs to create a new mesh, be decimated, or renamed. The same is true for clearing the LOD values
-            
-            else:
-                
+            else:               
                 if self.new_mesh == False:
                     self.set_LOD(active_obj, LOD[0], LOD[1])
                     bpy.ops.object.modifier_add(type='DECIMATE')
                     active_obj.modifiers["Decimate"].ratio = LOD[2]
-                
                 else:
                     created_LOD = self.create_LOD(active_obj)
                     self.set_LOD(created_LOD, LOD[0], LOD[1])
@@ -277,7 +324,7 @@ class LT_MT_set_lod_menu(bpy.types.Menu):
         
         layout.operator('lt.create_lod', text="Reset LOD").level_int = 5
 
-
+#this might be come redundent later
 class LT_OT_so_no_head(bpy.types.Operator):
     
     bl_idname = "lt.so_no_head"

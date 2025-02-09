@@ -42,7 +42,7 @@ bl_info = {
     "category": "Meshes"
     }
 
-class tailor_AddonPreferences(bpy.types.AddonPreferences):
+class LT_PT_tailor_AddonPreferences(bpy.types.AddonPreferences):
     
     bl_idname = __name__
 
@@ -81,12 +81,12 @@ class LT_PT_lazy_panel_parent(LT_scene_master_panel, bpy.types.Panel):
     bl_idname = "LT_PT_lazy_panel_parent"
     bl_category = "Lazy Talior"
 
+# to whoever sees this: this is a mess, but its the price I had to pay for user friendly ui
     def draw(self, context):
         
+        tailor_props = bpy.context.scene.tailor_props        
         layout = self.layout
 
-        tailor_props = bpy.context.scene.tailor_props #there's gotta be a better way than writting this out constantly
-        
         box = layout.box()
         
         if tailor_props.InitBool == False: 
@@ -99,7 +99,7 @@ class LT_PT_lazy_panel_parent(LT_scene_master_panel, bpy.types.Panel):
 
         col = layout.column()
         col.enabled = tailor_props.InitBool
-        col.label(text="Mannequin Options")
+        col.label(text="Mannequin Options: Basic")
         col.separator(type='LINE')
         col.separator(factor=0.5)
     
@@ -112,54 +112,118 @@ class LT_PT_lazy_panel_parent(LT_scene_master_panel, bpy.types.Panel):
         op_col = split.column()
         op_col.operator("lt.set_base_tailor")
         op_col.operator("lt.defualt_preset_tailor", text="Apply")
-        op_col.operator("lt.mannequin_reset", text="Reset")
-        row = col.row()
-        row.alignment = 'LEFT'
-        row.operator("wm.call_menu", text="Finalise").name = "LT_MT_mass_apply_menu"
-        col.separator(type='LINE')
-        col.prop(context.scene, "lt_actions")
-
-
         
+        col = layout.column()
+        col.enabled = tailor_props.InitBool
+        col.separator(factor=0.5)
+
+        col = layout.column()
+        col.enabled = tailor_props.InitBool
+        split = col.split(factor=0.35)
+        split_c = split.column()
+        split_c.operator("wm.call_menu", text="Finalise").name = "LT_MT_mass_apply_menu"
+        
+        props = split_c.operator("lt.confirm_choice", text="Reset")
+        props.the_thing = "reset Local_Mannequin"
+        props.op_name = "lt.mannequin_reset"
+        
+        col.separator(factor=0.25)
+        col.separator(type='LINE')
+
+
+
+class LT_PT_user_action_panel(LT_scene_master_panel, bpy.types.Panel):
+    
+    bl_label = "Advanced Options"
+    bl_idname = "LT_PT_user_action_panel"
+    bl_parent_id = "LT_PT_lazy_panel_parent"
+    bl_order = 0
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        
+        tailor_props = bpy.context.scene.tailor_props
+        
+        layout = self.layout
+        layout.enabled = tailor_props.InitBool
+        col = layout.column()
+        col.label(text="Mannequin Options: Custom")
+        col.separator(type='LINE')
+        col.prop(context.scene, "lt_actions", text="Pre-Set")
+        split = col.split(factor=0.65)
+        split_a = split.column()
+        
+        split_b = split.column()
+        split_b.operator("lt.apply_user_preset", text="Apply")
+        
+        split_b.operator("lt.load_user_presets", text="Load")
+        
+        check_save = split_b.operator("lt.confirm_choice", text="Reset")
+        check_save.the_thing = "save ALL user pre-sets in this file"
+        check_save.warn_extra = True
+        check_save.warn_message = "Warning: This will overwrite all pre-sets with the same name."
+        check_save.op_name = "lt.save_user_presets"
+
+        col.separator(type='LINE')
+
 class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
     
     bl_label = "Utility"
     bl_idname = "LT_PT_utility_panel"
     bl_parent_id = "LT_PT_lazy_panel_parent"
-    bl_order = 0
-    bl_options = {'DEFAULT_CLOSED'}
-    
-
-    def draw(self, context):
-        
-        tailor_props = bpy.context.scene.tailor_props
-
-        layout = self.layout
-        layout.enabled = tailor_props.InitBool
-        layout.label(text="Mesh Options")
-        layout.operator("wm.call_menu", text="Set Export Order").name = "LT_MT_export_order_menu"
-        layout.operator("lt.so_no_head", text="Create Head_M")
-        layout.prop_search(bpy.context.scene,)
-  
-
-class LT_PT_lod_factory_panel(LT_scene_master_panel, bpy.types.Panel):
-    
-    bl_label = "LOD factory"
-    bl_idname = "LT_PT_lod_factory_panel"
-    bl_parent_id = "LT_PT_lazy_panel_parent"
     bl_order = 1
     bl_options = {'DEFAULT_CLOSED'}
+    
 
     def draw(self, context):
-            
+        
         tailor_props = bpy.context.scene.tailor_props
+        tailor_prefs = bpy.context.preferences.addons[__name__].preferences
+
         layout = self.layout
         layout.enabled = tailor_props.InitBool
-        
         col = layout.column()
-        col.operator("wm.call_menu", text="Create LODs").name = "LT_MT_create_lod_menu"
-        col.operator("wm.call_menu", text="Set LODs").name = "LT_MT_set_lod_menu"
+        col.label(text="Mesh Options:")
+        col.operator("wm.call_menu", text="Set Export Order").name = "LT_MT_export_order_menu"
+        col.operator("lt.so_no_head", text="Create Head_M")
+        
+        layout.separator(type='LINE')
+        layout.label(text="LOD factory:")
 
+        row = layout.row()
+        row.operator("wm.call_menu", text="Create LODs").name = "LT_MT_create_lod_menu"
+        row.operator("wm.call_menu", text="Set LODs").name = "LT_MT_set_lod_menu"
+        
+        col.label(text="Export Helpers:")
+        col.prop(tailor_props,"gilf_bones", text="")
+        col.operator("lt.obj_dropper").obj_name= tailor_props.gilf_bones
+
+        if tailor_prefs.volno_debug == True:
+            box = layout.box()
+            box.label(text="Debug Tools")
+            box.operator("lt.constraints", text="Child Of")
+            props = box.operator("lt.constraints", text="Stretch To")
+            props.stretch_to_bool = True
+
+
+class LT_PT_export_helpers_panel(LT_scene_master_panel, bpy.types.Panel):
+    
+    bl_label = "export_helpers"
+    bl_idname = "LT_PT_export_helpers_panel"
+    bl_parent_id = "LT_PT_lazy_panel_parent"
+    bl_order = 2
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        
+        tailor_props = bpy.context.scene.tailor_props
+        
+        layout = self.layout
+        layout.enabled = tailor_props.InitBool
+        col = layout.column()
+        col.label(text="Export Helpers:")
+        col.prop(tailor_props,"gilf_bones", text="")
+        col.operator("lt.obj_dropper").obj_name= tailor_props.gilf_bones
 
 class LT_PT_mannequin_vis(bpy.types.Panel):
 
@@ -197,27 +261,40 @@ classes = (
     LT_OT_initialise,
     LT_OT_defualt_preset_tailor,
     tailor_props,
-    tailor_AddonPreferences,
+    LT_PT_tailor_AddonPreferences,
     LT_OT_mannequin_reset,
     LT_OT_set_base_tailor,
     LT_PT_mannequin_vis,
+    LT_PT_user_action_panel,
     LT_PT_utility_panel,
+    LT_PT_export_helpers_panel,
     LT_OT_export_order_setter,
     LT_OT_mass_apply_modifier,
     LT_MT_mass_apply_menu,
     LT_MT_export_order_menu,
     LT_OT_create_lod,
-    LT_PT_lod_factory_panel,
     LT_MT_create_lod_menu,
     LT_MT_set_lod_menu,
     LT_OT_so_no_head,
+    LT_OT_apply_user_preset,
+    LT_OT_load_user_presets,
     LT_OT_save_user_presets,
+    LT_OT_constraints,
+    LT_OT_confirm_choice,
+    LT_OT_obj_dropper,
 
 
     )
 
 def register():
 
+
+
+    bpy.types.Scene.lt_actions = bpy.props.PointerProperty(
+
+        type=bpy.types.Action,
+        poll=lt_base_action_poll
+    )
     for _class in classes: 
         bpy.utils.register_class(_class)
     
@@ -225,7 +302,9 @@ def register():
 
 def unregister():
 
+
     del bpy.types.Scene.tailor_props
+    del bpy.types.Scene.lt_actions
     for _class in classes: 
         bpy.utils.unregister_class(_class)  
 

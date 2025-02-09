@@ -1,6 +1,4 @@
 # this is for swapping around what body we're fitting too
-# collections_all does not exist in prior to 4.1, will need to make a patch for earlior verions
-
 
 import bpy
 import enum
@@ -23,10 +21,7 @@ from . LazyTalior_utils import *
 
 #step by step:
 # clear all user transfroms -> deselect all other objects -> make LM avtive obj -> swap LMB(ARM) data -> set inverse on all "child of" constraints in LM -> apply action preset
-
 # class contains functions needed to control the swapping of presets/armatures
-# current code/presets assume that you are either converting HUM_M/HUM_F to another body type.
-# possible todo: come back and add a frame work to allow converting from other body types to HUM_M/HUM_F instead of just from
 
 class LT_BodyShop:
     
@@ -48,7 +43,7 @@ class LT_BodyShop:
                     PN.data.bones.active = b.bone                               
                     bpy.ops.constraint.childof_set_inverse(constraint="Child Of", owner="BONE")
     
-    def stretch_to_mass_set(self): #todo: merge this and the above into one
+    def stretch_to_mass_set(self): #NOTE: not sure if this is actualy needed
         PN = bpy.data.objects[self.LM]
         for b in PN.pose.bones:
             for c in b.constraints:
@@ -94,9 +89,7 @@ class LT_BodyShop:
         if self.Needs_Rest == True:
             bpy.ops.pose.armature_apply(selected=False)
             #"Needs_Rest" is for when a new rest pose needs to be appiled to the armatrue
-            # rest pose is the defualt postion of bones, mainly needed for when converting an outfit that is not fitted to the current armature.
-            # converting armour that was made to fit HUM_M, LM's rest pose needs to be HUM_M
-            # if the armour was made to fit GNO_F, then the rest pose needs to be GNO_F
+
     
     # functions sperated out like this so that we are able to call on indvidual parts
     def BodySwap(self): 
@@ -107,7 +100,9 @@ class LT_BodyShop:
 
 
 
+
 #pattern for tuple (PRESET_NAME, SKELENTON)
+#should probbably convert this to use LT_Codebook but its fine for now
 class F_PreSets(Enum):
 
     GTY = ("LT_GTY_F_BDY", "LT_HUM_F_BASE")
@@ -157,10 +152,8 @@ class LT_OT_defualt_preset_tailor(bpy.types.Operator):
     bl_label = "Apply Pre-Set"
     bl_description = "Applies the pre-set selected in 'To:' to the Mannequin. WARNING: will clear all user transforms"
 
-
     def execute(self, context):
 
-        
         tailor_props = context.scene.tailor_props
         
         LT_active_check.force_active()
@@ -181,6 +174,8 @@ class LT_OT_defualt_preset_tailor(bpy.types.Operator):
         return {"FINISHED"}
 
 
+
+
 class LT_OT_mannequin_reset(bpy.types.Operator):
 
     bl_idname = "lt.mannequin_reset"
@@ -190,36 +185,34 @@ class LT_OT_mannequin_reset(bpy.types.Operator):
 
     def execute(self, context):
 
-        
         LT_active_check.force_active()
         
         bpy.ops.object.mode_set(mode="POSE")
-        LT_BodyShop(PreSet=("NONE"), BodyArm=("NONE")).FullReset()
+        LT_BodyShop().FullReset()
+        return {"FINISHED"}
+
+class LT_OT_constraints(bpy.types.Operator):
+
+    bl_idname = "lt.constraints"
+    bl_label = "BONE ZONE"
+    bl_description = "Manual fix for stretch_to and child_of constaints when swaping armatures"
+    
+    stretch_to_bool: bpy.props.BoolProperty(
+        name="stretch_to_bool",
+        default=False
+        )
+
+    def execute(self, context):
+
+        LT_BodyShop().BoneVis_Validator(stretch_To=self.stretch_to_bool)
+        
         return {"FINISHED"}
 
 
+class LT_codebook:
 
-def LT_Action_Error_Popup():
-
-    def draw(self, context):
-       
-        self.layout.label(text="There is an issue with the Pre_Set identifier")
-        self.layout.label(text="Please check the addon manual for vaild naming conventions, and try again")
-
-    bpy.context.window_manager.popup_menu(draw, title = "Warning: Pre_Set identifier invalid", icon = 'ERROR')
-
-# PRESET PATTERN EXAMPLE: 
-# "TYPE INT" + "-"+ "FEM/MASC INT" + "SKELENTON INT" + "_" + "FEM/MASC INT" + "SKELENTON INT" + "_" + "USER DEFINED NAME"
-#first skelenton is the FROM armature, second is the TO armature
-# LT_GTY_F_BDY would be: A_AA_AA_GTY_F_BDY 
-
-class LT_user_codebook:
-
-    def __init__(self, ActionName):
-        
-        self.ActionName = ActionName
-
-    def read_code(self, int_a, int_b,):
+    #takes in 2 intagers and returns a skelenton name
+    def read_code(self, int_a: int, int_b: int):
         
         Category = Enum('Category', [('Group_Fem', 0), ('Group_Masc', 1)])
         Types = Enum('Types', [('HUM', 0), ('HUM_S', 1), ('SHORT', 2), ('DWR', 3)])
@@ -244,46 +237,58 @@ class LT_user_codebook:
         }
         
         try:
-            return Armature_Groups[Category(int(int_a))][Types(int(int_b))]
+            return Armature_Groups[Category(int_a)][Types(int_b)]
         
         except ValueError:
-            LT_Action_Error_Popup()
+            
+            LT_Error_Popup(
+                pop_title="Warning: Pre_Set identifier invalid",
+                error_reason="There is an issue with the Pre_Set identifier",
+                suggestion="Please check the addon manual for vaild naming conventions, and try again"
+                )
+            
             pass
 
-    def read(self):
+    # PRESET PATTERN EXAMPLE: 
+    # "TYPE INT" + "-"+ "FEM/MASC INT" + "SKELENTON INT" + "_" + "FEM/MASC INT" + "SKELENTON INT" + "_" + "USER DEFINED NAME"
+    #first skelenton is the FROM armature, second is the TO armature
+    # LT_GTY_F_BDY would be: 0_00_00_GTY_F_BDY
+    def read_ActionName(self, ActionName: str):
         
-        Code = self.ActionName[0:7].replace('_','')
+        Code = ActionName[0:7].replace('_','')
         return tuple((self.read_code(int(Code[1]), int(Code[2])), self.read_code(int(Code[3]), int(Code[4]))))
 
 
+
+#TODO: this is not finished
 class LT_OT_apply_user_preset(bpy.types.Operator):
 
     bl_idname = "lt.apply_user_preset"
     bl_label = "User Preset"
-    bl_description = "Sets the Mannequin back to its defualt state or clears user changes"
+    bl_description = "Applies a user defined preset to Local_Mannequin"
 
-    Action_Name: bpy.props.StringProperty(
-        name="Action_Name",
-        default="",
-    )
 
     def execute(self, context):
         
-        
+        User_Action = bpy.context.scene.lt_actions.name
         LT_active_check.force_active()
         bpy.ops.object.mode_set(mode="POSE")
+        action_type = User_Action[0]
+        
+        ReadCode = LT_codebook().read_ActionName(User_Action)
+        print(User_Action)
+        
+        if action_type == '0':
 
-        ReadCode = LT_user_codebook(self.Action_Name).read()
+            LT_BodyShop(BodyArm=ReadCode[0], Needs_Rest=True).SwapSkeleton()
+            LT_BodyShop(PreSet=User_Action).ApplyPreSet()
 
-        if action_type == 1:
 
-            LT_BodyShop(PreSet=self.Action_Name, BodyArm=ReadCode[0]).ApplyPreSet(Is_Addative=True)
-
-        if action_type == 2:
+        if action_type == '1':
             
-            LT_BodyShop(PreSet=self.Action_Name, BodyArm=ReadCode[1]).SwapSkeleton(self, Needs_Rest=False)
-            LT_BodyShop(PreSet=self.Action_Name, BodyArm=ReadCode[0]).ApplyPreSet()
-            
+            print(User_Action)
+            LT_BodyShop(PreSet=User_Action).ApplyPreSet(Is_Addative=True)
+
         return {"FINISHED"}
 
 
