@@ -1,37 +1,47 @@
-# this is for swapping around what body we're fitting too
-
 import bpy
 import enum
 from enum import Enum
-from . LazyTalior_utils import *
 
 
+'''
+HOW THIS WORKS: MANNEQUINS ARE LIKE ONIONS
+    
+    LM = Local_Mannequin
+    LMB = Local_Mannequin_Base
 
-
-# workflow:
-# "Local_Mannequin" (LM) copies bone postions from "Local_Mannequin_Base" (LMB) via bone constraints in pose space
-# fully weighted mesh(s) has armature modifer targeting LM
-# LM's bone constraints target OBJECT LMB(OBJ) NOT the ARMATURE DATA LMB(ARM)
-# this allowes LMB(OBJ)'s armature data to be swapped with another armature with the same bone hirachy(ie HUM_M to HUM_MS)
-# when this happens, LM constrained bones snap to the new postion of LMB(OBJ)'s bones
-# because this happens in pose space, this in turn snaps the mesh into a new postion.
-# LM has additional controll bones + constraints that allow the user to further form the mesh by armature defromation.
-# after LMB(ARM) has been swapped, a preset action(pose) is applied on top of the existing deformations to tweak the end result. which action is user defined.
-# user then applies the armature deformation modifer on the meesh to finalise the result.
-
+    ┌─────┐      ┌─────┐      ┌─────┐
+    │ LM  │ ←――― │ LMB │ ←――― │ LMB │ ←―――→  POOL OF ARMATURE DATA 
+    │(OBJ)│      │(OBJ)│      │(ARM)│       WITH SAME BONE HIERARCHY             
+    └─────┘      └─────┘      └─────┘        BUT DIFFERNT LOCATIONS                          
+      │ ↑
+      │ └――――――― POSE APPLIED ON TOP OF LM (OBJ)     
+      ↓          TO BETTER CONTROL DEFORMATION                 
+    ┌─────┐
+    │MESH │ 
+    └─────┘
+    
+    bones in LM (OBJECT) copy bone postions in LMB (OBJECT) (!!SPECIFICALY OBJECT!!) using pose mode bone constraints/drivers
+    LMB (DATA) is swapped with another data block with the same bone hierachy, but differnt locations. (ie, HUM_F to DWR_F)
+    LMB (OBJECT)'s bones then change postion to match the new data
+    LM (OBJECT)'s constraints make it match the updated postions in POSE SPACE (some constraints need to be reset when this happens)
+    because this happens in POSE SPACE, it will deform meshes targeting LM (OBJECT) acordingly, thus "snapping" the mesh from one armature to another
+    A "Pre-Set" (an Action), applied as a pose on LMB (OBJECT) to better controll the deformation, controll bones then allow futher tweaking of final result
+    
+'''
 #step by step:
 # clear all user transfroms -> deselect all other objects -> make LM avtive obj -> swap LMB(ARM) data -> set inverse on all "child of" constraints in LM -> apply action preset
 # class contains functions needed to control the swapping of presets/armatures
-
-class LT_BodyShop:
-    
-    def __init__(self, PreSet='', BodyArm='', LMB='Local_Mannequin_Base', LM='Local_Mannequin', Needs_Rest=False):
+class BodyShop:
+    #TODO: ask Nav about cleaning this up
+    def __init__(self, PreSet='', from_Arm='', to_Arm='', LMB='Local_Mannequin_Base', LM='Local_Mannequin'):
         
         self.PreSet = PreSet # name(string) of the action being called
-        self.BodyArm = BodyArm # name(string) of the body armature that we're changing too, not always needed 
+        self.from_Arm = from_Arm #name(string) of the body armature that we're changing from, not always needed 
+        self.to_Arm = to_Arm # name(string) of the body armature that we're changing too, not always needed 
         self.LMB = LMB
         self.LM = LM
-        self.Needs_Rest = Needs_Rest
+
+    
     # upon swapping armature data, the 'childof' constraints need to have their inverse set again, lest you wish to see some sort of demonic gibon
     def child_of_mass_invert(self):
         PN = bpy.data.objects[self.LM]
@@ -80,100 +90,44 @@ class LT_BodyShop:
         self.BoneVis_Validator(stretch_To=True)
         bpy.ops.pose.armature_apply(selected=False)
 
-    def SwapSkeleton(self):
+    def set_base(self):
+        bpy.ops.pose.user_transforms_clear(only_selected=False)
+        bpy.data.objects[self.LMB].data = bpy.data.armatures[self.from_Arm]
+        
+        #LM then needs to be corrected
+        self.BoneVis_Validator()
+        bpy.ops.pose.armature_apply(selected=False)
+        #sets new rest pose, was originaly optional as its not always nessiscary but its better to just do it everytime than constantly check
+    
+    def change_base(self):
 
         bpy.ops.pose.user_transforms_clear(only_selected=False)
-        bpy.data.objects[self.LMB].data = bpy.data.armatures[self.BodyArm]
-        self.BoneVis_Validator()
-        
-        if self.Needs_Rest == True:
-            bpy.ops.pose.armature_apply(selected=False)
-            #"Needs_Rest" is for when a new rest pose needs to be appiled to the armatrue
+        bpy.data.objects[self.LMB].data = bpy.data.armatures[self.to_Arm]
 
-    
+        #LM then needs to be corrected
+        self.BoneVis_Validator()
+
+
     # functions sperated out like this so that we are able to call on indvidual parts
     def BodySwap(self): 
-                                    
-        self.SwapSkeleton()
+        
+        self.set_base()                           
+        self.change_base()
         bpy.ops.pose.select_all(action='DESELECT')
         bpy.data.objects[self.LM].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
 
 
+class active_check:
 
-
-#pattern for tuple (PRESET_NAME, SKELENTON)
-#should probbably convert this to use LT_Codebook but its fine for now
-class F_PreSets(Enum):
-
-    GTY = ("LT_GTY_F_BDY", "LT_HUM_F_BASE")
-    HUM_S = ("LT_HUM_FS_BDY", "LT_HUM_FS_BASE")
-    DGB = ("LT_DGB_F_BDY", "LT_HUM_FS_BASE")
-    GNO = ("LT_GNO_F_BDY", "LT_SHORT_F_BASE")
-    HFL = ("LT_HFL_F_BDY", "LT_SHORT_F_BASE")
-    DWR = ("LT_DWR_F_BDY", "LT_DWR_F_BASE")
-    HRT = ("LT_HUM_F_FTM", "LT_HUM_M_BASE")
-    
-class M_PreSets(Enum):
-    
-    GTY = ("LT_GTY_M_BDY", "LT_HUM_M_BASE")
-    HUM_S = ("LT_HUM_MS_BDY", "LT_HUM_MS_BASE")
-    DGB = ("LT_DGB_M_BDY", "LT_HUM_MS_BASE")
-    GNO = ("LT_GNO_M_BDY", "LT_SHORT_M_BASE")
-    HFL = ("LT_HFL_M_BDY", "LT_SHORT_M_BASE")
-    DWR = ("LT_DWR_M_BDY", "LT_DWR_M_BASE")
-    HRT = ("LT_HUM_M_MTF", "LT_HUM_F_BASE")
-
-
-class LT_OT_set_base_tailor(bpy.types.Operator):
-
-    bl_idname = "lt.set_base_tailor"
-    bl_label = "Set Base"
-    bl_description = "Changes the resting postion of the mannequin to the body type selected in 'From:'"
-
-    def execute(self, context):
-
-        tailor_props = context.scene.tailor_props
-        LT_active_check.force_active()
-        bpy.ops.object.mode_set(mode="POSE")
+    def force_active(ObjName='Local_Mannequin'): # norb's hell
         
-        # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
-        SewingPattern = LT_BodyShop(
-            BodyArm=("LT_" + (tailor_props.from_body) + "_BASE"),
-            Needs_Rest=True
-            )
-
-        SewingPattern.SwapSkeleton()
-  
-        return {"FINISHED"}
-    
-class LT_OT_defualt_preset_tailor(bpy.types.Operator):
-
-    bl_idname = "lt.defualt_preset_tailor"
-    bl_label = "Apply Pre-Set"
-    bl_description = "Applies the pre-set selected in 'To:' to the Mannequin. WARNING: will clear all user transforms"
-
-    def execute(self, context):
-
-        tailor_props = context.scene.tailor_props
+        try:
+            bpy.ops.object.mode_set(mode="OBJECT")
+            bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
+        except RuntimeError:
+            bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
         
-        LT_active_check.force_active()
-        bpy.ops.object.mode_set(mode="POSE")
-
-        if tailor_props.from_body == "HUM_M":
-            Codebook = M_PreSets[tailor_props.to_body]
-        else:
-            Codebook = F_PreSets[tailor_props.to_body]
-        
-        SewingPattern = LT_BodyShop(
-            
-            PreSet=Codebook.value[0], 
-            BodyArm=Codebook.value[1])
-        
-        SewingPattern.BodySwap()
-        
-        return {"FINISHED"}
-
-
+        bpy.ops.object.select_pattern(pattern=ObjName, extend=False)
 
 
 class LT_OT_mannequin_reset(bpy.types.Operator):
@@ -185,10 +139,10 @@ class LT_OT_mannequin_reset(bpy.types.Operator):
 
     def execute(self, context):
 
-        LT_active_check.force_active()
+        active_check.force_active()
         
         bpy.ops.object.mode_set(mode="POSE")
-        LT_BodyShop().FullReset()
+        BodyShop().FullReset()
         return {"FINISHED"}
 
 class LT_OT_constraints(bpy.types.Operator):
@@ -204,60 +158,100 @@ class LT_OT_constraints(bpy.types.Operator):
 
     def execute(self, context):
 
-        LT_BodyShop().BoneVis_Validator(stretch_To=self.stretch_to_bool)
+        BodyShop().BoneVis_Validator(stretch_To=self.stretch_to_bool)
         
         return {"FINISHED"}
 
 
-class LT_codebook:
+#TODO: fix this
+class LT_OT_set_base_tailor(bpy.types.Operator):
 
-    #takes in 2 intagers and returns a skelenton name
-    def read_code(self, int_a: int, int_b: int):
+    bl_idname = "lt.set_base_tailor"
+    bl_label = "Set Base"
+    bl_description = "Changes the resting postion of the mannequin to the body type selected in 'From:'"
+
+
+    
+    def execute(self, context):
+
+        lt_util_props = context.scene.lt_util_props
+        active_check.force_active()
+        bpy.ops.object.mode_set(mode="POSE")
         
-        Category = Enum('Category', [('Group_Fem', 0), ('Group_Masc', 1)])
-        Types = Enum('Types', [('HUM', 0), ('HUM_S', 1), ('SHORT', 2), ('DWR', 3)])
+        # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
+        SewingPattern = BodyShop(
+            to_Arm=("LT_" + (lt_util_props.from_body) + "_BASE"),
+            )
 
-        Armature_Groups = {
+        SewingPattern.set_base()
+  
+        return {"FINISHED"}
+    
+
+
+
+class LT_OT_defualt_preset_tailor(bpy.types.Operator):
+
+    bl_idname = "lt.defualt_preset_tailor"
+    bl_label = "Apply Pre-Set"
+    bl_description = "Applies the pre-set selected in 'To:' to the Mannequin. WARNING: will clear all user transforms"
+
+    #NOTE: this is dumb but I want the defualt presets to be as easy to use as possible for the enduser 
+    #that means putting the training wheels on
+
+    #god damn blender restricting bpy.data
+    class F_PreSets(Enum):
+
+        GTY ="LT_GTY_F_BDY"
+        HUM_S = "LT_HUM_FS_BDY"
+        DGB = "LT_DGB_F_BDY"
+        GNO = "LT_GNO_F_BDY"
+        HFL = "LT_HFL_F_BDY"
+        DWR = "LT_DWR_F_BDY"
+        HRT = "LT_HUM_F_FTM"
+    
+    class M_PreSets(Enum):
+    
+        GTY = "LT_GTY_M_BDY"
+        HUM_S = "LT_HUM_MS_BDY"
+        DGB = "LT_DGB_M_BDY"
+        GNO = "LT_GNO_M_BDY"
+        HFL = "LT_HFL_M_BDY"
+        DWR = "LT_DWR_M_BDY"
+        HRT = "LT_HUM_M_MTF"
+
+
+    def execute(self, context):
+
+        lt_util_props = context.scene.lt_util_props
+        
+        active_check.force_active()
+        bpy.ops.object.mode_set(mode="POSE")
+
+        if lt_util_props.from_body == "HUM_F":
+            Codebook = bpy.data.actions[self.F_PreSets[lt_util_props.to_body].value]
+        else:
+            Codebook = bpy.data.actions[self.M_PreSets[lt_util_props.to_body].value]
+        
+        SewingPattern = BodyShop(
             
-            Category.Group_Fem: {
-                
-                Types.HUM: "LT_HUM_F_BASE",
-                Types.HUM_S: "LT_HUM_FS_BASE",
-                Types.SHORT: "LT_SHORT_F_BASE",
-                Types.DWR: "LT_DWR_F_BASE",    
-            },
-
-            Category.Group_Masc: {
-                
-                Types.HUM: "LT_HUM_M_BASE",
-                Types.HUM_S: "LT_HUM_MS_BASE",
-                Types.SHORT: "LT_SHORT_M_BASE",
-                Types.DWR: "LT_DWR_M_BASE", 
-            } 
-        }
+            PreSet=Codebook.name,
+            from_Arm=Codebook['LT_From_Body'], 
+            to_Arm=Codebook['LT_To_Body']
+            )
         
-        try:
-            return Armature_Groups[Category(int_a)][Types(int_b)]
+        SewingPattern.BodySwap()
         
-        except ValueError:
-            
-            LT_Error_Popup(
-                pop_title="Warning: Pre_Set identifier invalid",
-                error_reason="There is an issue with the Pre_Set identifier",
-                suggestion="Please check the addon manual for vaild naming conventions, and try again"
-                )
-            
-            pass
+        return {"FINISHED"}
 
-    # PRESET PATTERN EXAMPLE: 
-    # "TYPE INT" + "-"+ "FEM/MASC INT" + "SKELENTON INT" + "_" + "FEM/MASC INT" + "SKELENTON INT" + "_" + "USER DEFINED NAME"
-    #first skelenton is the FROM armature, second is the TO armature
-    # LT_GTY_F_BDY would be: 0_00_00_GTY_F_BDY
-    def read_ActionName(self, ActionName: str):
+def Error_Popup(pop_title: str, error_reason: str, suggestion: str):
+
+    def draw(self, context):
+       
+        self.layout.label(text=error_reason)
+        self.layout.label(text=suggestion)
         
-        Code = ActionName[0:7].replace('_','')
-        return tuple((self.read_code(int(Code[1]), int(Code[2])), self.read_code(int(Code[3]), int(Code[4]))))
-
+    bpy.context.window_manager.popup_menu(draw, title = pop_title, icon = 'ERROR')
 
 
 #TODO: this is not finished
@@ -270,26 +264,138 @@ class LT_OT_apply_user_preset(bpy.types.Operator):
 
     def execute(self, context):
         
-        User_Action = bpy.context.scene.lt_actions.name
-        LT_active_check.force_active()
+        User_Action = bpy.context.scene.lt_actions
+        active_check.force_active()
         bpy.ops.object.mode_set(mode="POSE")
-        action_type = User_Action[0]
-        
-        ReadCode = LT_codebook().read_ActionName(User_Action)
-        print(User_Action)
-        
-        if action_type == '0':
 
-            LT_BodyShop(BodyArm=ReadCode[0], Needs_Rest=True).SwapSkeleton()
-            LT_BodyShop(PreSet=User_Action).ApplyPreSet()
+        if User_Action["LT_Type"] == 'FULL':
 
+            BodyShop(PreSet=User_Action.name, from_Arm=User_Action['LT_From_Body'], to_Arm=User_Action['LT_To_Body']).BodySwap()
 
-        if action_type == '1':
+        if  User_Action["LT_Type"] == 'ADDITIVE':
             
-            print(User_Action)
-            LT_BodyShop(PreSet=User_Action).ApplyPreSet(Is_Addative=True)
+            BodyShop(PreSet=User_Action.name).ApplyPreSet(Is_Addative=True)
 
+        return {"FINISHED"}
+     
+#TODO: could probabbly merge these two into one operator but its fine for now
+class LT_OT_load_user_presets(bpy.types.Operator):
+    
+    bl_idname = "lt.load_user_presets"
+    bl_label = "load user presets"
+    bl_description = "Loads all actions from the Blend file defined in the addon preferences."
+
+    def execute(self, context):
+        user_lib_path = bpy.context.preferences.addons[__package__].preferences.user_lib_path
+        if user_lib_path != 'set me!':
+            try:
+                with bpy.data.libraries.load(bpy.context.preferences.addons[__package__].preferences.user_lib_path) as (data_from, data_to):
+                    data_to.actions = data_from.actions
+
+            except KeyError:
+                
+                Error_Popup(
+                    pop_title="Error: Unable to load pre-sets",
+                    error_reason="No valid data found in the provided filepath.",
+                    suggestion="Either the path is invalid, or there are no actions inside the Blend file."
+                    )
+        else:
+            Error_Popup(
+                pop_title="Error: File Path not set",
+                error_reason="The user has not entered a filepath in the addon's preferences.",
+                suggestion="The user should go do that."
+                )
+        
+        return {"FINISHED"}
+    
+
+class LT_OT_save_user_presets(bpy.types.Operator):
+    
+    bl_idname = "lt.save_user_preset"
+    bl_label = "Save User Pre-Sets"
+    bl_description = "Saves all Actions created by the user to the Blend file defined in the addon preferences'"
+
+    
+    def execute(self, context):
+        
+        user_lib_path = bpy.context.preferences.addons[__package__].preferences.user_lib_path
+        
+        if user_lib_path != 'set me!':
+            data_blocks = set(action for action in bpy.data.actions if not action.name.startswith("LT_"))
+            bpy.data.libraries.write(user_lib_path, data_blocks, fake_user=True)
+        
+        else:
+            Error_Popup(
+                pop_title="Error: File Path not set",
+                error_reason="The user has not entered a filepath in the addon's preferences.",
+                suggestion="The user should go do that."
+                )
+        
         return {"FINISHED"}
 
 
+
+class LT_MT_about_preset_menu(bpy.types.Menu):
+    
+    bl_idname = "LT_MT_about_preset_menu"
+    bl_label = "About Pre-Set"
+
+    dating_easter_egg = (
+            
+        "Long walks on the beach",
+        "The smell of burnt toast",
+        "The thrill of the kill",
+        "Taylor Swift",
+        "The colour purple",
+        "Licking lamp posts in winter",
+        "Being toxic on reddit",
+        "Sending Volno $5",
+        "Going on advantures",
+        "Knitting",
+        "Pirating Adobe products",
+        "You",
+        "Being in the cuck vent"
+        )
+            
+
+    def get_short_name(self, propname):
+        #this is awful
+
+        return (bpy.context.scene.lt_actions[propname].replace('LT_','')).replace('_BASE','')
+    
+
+        
+    def draw(self, context):
+        import random
+        egg_check = random.randint(1, 20)
+
+        dating_easter_egg = (
+            
+            "Long walks on the beach",
+            "The smell of burnt toast",
+            "The thrill of the kill",
+            "Taylor Swift",
+            "The colour purple",
+            "Licking lamp posts in winter",
+            "Being toxic on reddit",
+            "Sending Volno $5",
+            "Going on advantures",
+            "Knitting",
+            "Pirating Adobe products",
+            "You",
+            "Being in the cuck vent"
+        )
+        
+        lt_actions = bpy.context.scene.lt_actions
+        lt_type = lt_actions['LT_Type']
+        layout = self.layout
+
+        layout.label(text="Name: " + lt_actions.name)
+        layout.label(text="Type: " + lt_type)
+        if lt_type == "FULL":
+            layout.label(text="Converts From: " + self.get_short_name('LT_From_Body'))
+            layout.label(text="Converts To: " + self.get_short_name('LT_To_Body'))
+        layout.label(text="Creator: " + lt_actions['LT_Creator'])
+        if egg_check == 20:
+            layout.label(text="Likes: " + dating_easter_egg[random.randint(0, 12)])
 

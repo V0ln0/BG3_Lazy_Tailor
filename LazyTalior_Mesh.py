@@ -1,92 +1,8 @@
-#stuff thats needed in multiple places
+#misc stuff to do with meshes
 
 import bpy
 import enum
 from enum import Enum
-
-
-# checks for a collection, if it exists it returns the collection name. 
-# if it dosen't exist, it creates a new collection with the desried name and returns the new collection
-
-def LT_ensure_collection(Cname) -> bpy.types.Collection:
-
-    scene = bpy.context.scene
-
-    try:
-        link_to = scene.collection.children[Cname]
-        bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[link_to.name]
-    except KeyError:
-        link_to = bpy.data.collections.new(Cname)
-        scene.collection.children.link(link_to)
-        bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[link_to.name]
-
-    return link_to
-
-
-def LT_Error_Popup(pop_title: str, error_reason: str, suggestion: str):
-
-    def draw(self, context):
-       
-        self.layout.label(text=error_reason)
-        self.layout.label(text=suggestion)
-        
-    bpy.context.window_manager.popup_menu(draw, title = pop_title, icon = 'ERROR')
-
-
-#why did I make this a class? bleh who knows, i'm not changing it now
-class LT_active_check:
-
-    def force_active(ObjName='Local_Mannequin'): # norb's hell
-        
-        try:
-            bpy.ops.object.mode_set(mode="OBJECT")
-            bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
-        except RuntimeError:
-            bpy.context.view_layer.objects.active = bpy.data.objects[ObjName]
-        
-        bpy.ops.object.select_pattern(pattern=ObjName, extend=False)
-
-
-def LT_reset_confirm_Popup(do_that: str, op_name: str, extra: bool, extra_con: str): 
-
-    def draw(self, context):
-       self.layout.label(text=f"Are you sure that you wish to {do_that}?")
-       if extra == True:
-           self.layout.label(text=extra_con)
-       self.layout.operator(op_name, text= "Yes, do it.")
-        
-    bpy.context.window_manager.popup_menu(draw, title = "Confirm Choice", icon = 'QUESTION')
-
-class LT_OT_confirm_choice(bpy.types.Operator):
-    
-    bl_idname = "lt.confirm_choice"
-    bl_label = "confirm_choice"
-    bl_description = "*John Cena voice* are you sure about that?"
-      
-    the_thing: bpy.props.StringProperty(
-        name="the_thing",
-        default="If you're reading this, I forgot to set it",
-    )
-    
-    warn_extra: bpy.props.BoolProperty(
-        name="warn_extra",
-        default=False
-    )
-
-    warn_message: bpy.props.StringProperty(
-        name="op_name",
-        default="If you're reading this, I forgot to set TWO things",
-    )
-
-    op_name: bpy.props.StringProperty(
-        name="op_name",
-        default="",
-    )
-
-    def execute(self, context):
-        LT_reset_confirm_Popup((self.the_thing), (self.op_name), (self.warn_extra), (self.warn_extra))
-        return {"FINISHED"}
-
 
 class LT_OT_export_order_setter(bpy.types.Operator):
     
@@ -101,7 +17,6 @@ class LT_OT_export_order_setter(bpy.types.Operator):
     ) 
  
     def execute(self, context):
-
 
         if self.selected == False:
             con = bpy.data.objects['Local_Mannequin'].children
@@ -161,7 +76,6 @@ class LT_OT_mass_apply_modifier(bpy.types.Operator):
     ) 
     
     def execute(self, context):
-
         
         try:
             bpy.ops.object.mode_set(mode="OBJECT")
@@ -226,7 +140,6 @@ class LT_OT_create_lod(bpy.types.Operator):
         min=0,
         max=5,
     )
-
     new_mesh: bpy.props.BoolProperty(
         name="new_mesh",
         default=True

@@ -1,7 +1,7 @@
 #this file is for fetching assets and organising them inside the blend file
 import bpy
 import os
-from . LazyTalior_utils import *
+
 
 # this file used to be so much longer....
 # anyway, these functions load the needed armatures + actions into the current Blend file via an instanced collection + loads the actions required
@@ -9,14 +9,15 @@ from . LazyTalior_utils import *
 # this keeps the whole file much cleaner, but in order for the user to actualy use the anything we have linked over, it has to get "unpacked"
 # as in moved out of the insanced folder, and added to the current scene
 
-def LT_VersionCheck():
+
+def VersionCheck():
 
     if bpy.app.version < (4, 0, 0):
         return False
     else:
         return True
 
-def LT_VersionError_Popup(): 
+def VersionError_Popup(): 
 
     def draw(self, context):
        self.layout.label(text="Lazy Tailor requires Blender 4.0.0 or above, please download the latest version from Blender.org.")
@@ -24,20 +25,31 @@ def LT_VersionError_Popup():
         
     bpy.context.window_manager.popup_menu(draw, title = "Warning: Incompatible Version of Blender detected", icon = 'ERROR')
 
-def LT_loadActions(Path):
-        
-        with bpy.data.libraries.load(Path) as (data_from, data_to):
-            data_to.actions = data_from.actions #todo: store list of appended files to for cleaning up later
+def ensure_collection(Cname:str) -> bpy.types.Collection:
 
-        for A in data_to.actions:
-            A.use_fake_user = True
 
-# filter to prevent the user from selecting the defualt actuion presets in the ui
+    try:
+        link_to = bpy.context.scene.collection.children[Cname]
+        bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[link_to.name]
+    except KeyError:
+        link_to = bpy.data.collections.new(Cname)
+        bpy.context.scene.collection.children.link(link_to)
+        bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[link_to.name]
 
-def lt_base_action_poll(self, action): 
+    return link_to
+#same as ensure_collection but instead links to a specific collection instead of scene.collection
+def ensure_collection_child(Cname:str, Pcol) -> bpy.types.Collection:
 
-    if not action.name.startswith("LT_"):
-        return action 
+    try:
+        link_to = bpy.data.collections[Cname]
+        Pcol.children.link(link_to) 
+    except KeyError:
+        link_to = bpy.data.collections.new(Cname)
+        Pcol.children.link(link_to)
+    except RuntimeError:
+        link_to = bpy.data.collections[Cname]
+
+    return link_to
 
 class LT_OT_initialise(bpy.types.Operator):
 
@@ -45,61 +57,67 @@ class LT_OT_initialise(bpy.types.Operator):
     bl_label = "Initialise Lazy Talior"
     bl_description = "Imports assets needed by the addon into your current Blend file. You only need to run this once."
     
-    def LT_LoadCol(self, AssetCol, AssetPath):
-    
+    def MannequinInit(self):
+        
+        LibPath = bpy.context.scene.lt_util_props.LibPath
+        EnsuredCol = ensure_collection("Lazy Tailor Assets") #will also make the collection active
+        
+        isbones = "LT_DontTouchIsBones"
         bpy.ops.wm.link(
             
-            filepath=os.path.join(AssetPath, "Collection", AssetCol),
-            directory=os.path.join(AssetPath, "Collection"),
-            filename=AssetCol,
+            filepath=os.path.join(LibPath, "Collection", isbones),
+            directory=os.path.join(LibPath, "Collection"),
+            filename=isbones,
             do_reuse_local_id=True,
             instance_collections=True
             
             ) 
+        
+        bpy.data.objects[isbones].hide_viewport = True
+        MannequinCol = ensure_collection_child("Mannequins", EnsuredCol)
+        Mannequins = [Mannequin for Mannequin in bpy.data.objects if Mannequin.name.startswith("LT_Mannequin")]
+        
+        for linked_M in Mannequins:
+            MannequinCol.objects.link(linked_M)
+            linked_M.make_local()
+            linked_M.data.make_local()
 
-    def LT_MannequinInit(self):
-        
-        LibPath = bpy.context.scene.tailor_props.LibPath
-        
-        EnsuredCol = LT_ensure_collection("Lazy Tailor Assets") #will also make the collection active
-        self.LT_LoadCol("LT_DontTouchIsBones", LibPath)
-        bpy.data.objects["LT_DontTouchIsBones"].hide_viewport = True
-        
-        LT_loadActions(LibPath)
-        
-        Mannequins = []
-        for M in bpy.data.objects:
-            if M.name.startswith("LT_Mannequin"):
-                bpy.data.collections[EnsuredCol.name].objects.link(M)
-                Mannequins.append(M.name)
-        
         bpy.ops.object.select_all(action='DESELECT')
-        bpy.ops.object.select_by_type(type='ARMATURE')
-        bpy.ops.object.make_local(type='SELECT_OBDATA')
+        for M in MannequinCol.objects:
+            M.data.use_fake_user = True
+            M.data.name = "Local_" + (M.name.replace('LT_',''))
+            M.name = M.data.name
+        # local_Mannequins = self.link_mannequins(EnsuredCol)
         
-        for N in bpy.context.selected_objects: #this crap is literaly just to make sure that blender dosen't try to effect the linked data with similar names ffs
-            N.data.use_fake_user = True
-            N.data.name = "Local_" + ( N.name.replace('LT_',''))
-            N.name = "Local_" + ( N.name.replace('LT_',''))
+
+        
+
+        
+        # bpy.ops.object.select_by_type(type='ARMATURE')
+        # bpy.ops.object.make_local(type='SELECT_OBDATA')
+        
+        # for N in bpy.context.selected_objects:  
+        #     N.data.use_fake_user = True
+        #     N.data.name = "Local_" + (N.name.replace('LT_',''))
+        #     N.name = "Local_" + (N.name.replace('LT_',''))
+        
 
 
     def execute(self, context):
 
-        if LT_VersionCheck() == False:
-            LT_VersionError_Popup()
+        if VersionCheck() == False:
+            VersionError_Popup()
             
         else:
             try:
                 bpy.ops.object.mode_set(mode="OBJECT")
             except RuntimeError:
                 pass
-            self.LT_MannequinInit()
-            bpy.context.view_layer.objects.active = bpy.data.objects['Local_Mannequin']
-            bpy.context.scene.tailor_props.InitBool = True
+            self.MannequinInit()
+            # bpy.context.view_layer.objects.active = bpy.data.objects['Local_Mannequin']
+            bpy.context.scene.lt_util_props.InitBool = True
         
         return {"FINISHED"}
-
-
 
 
 class LT_OT_obj_dropper(bpy.types.Operator):
@@ -114,8 +132,12 @@ class LT_OT_obj_dropper(bpy.types.Operator):
     )
 
     def execute(self, context):
-        LibPath = bpy.context.scene.tailor_props.LibPath
-        
+        LibPath = bpy.context.scene.lt_util_props.LibPath
+        #this feels like a bad way of handling it
+        try:
+            bpy.ops.object.mode_set(mode="OBJECT")
+        except RuntimeError:
+            pass
         bpy.ops.wm.append(
             
             filepath=os.path.join(LibPath, "Object", self.obj_name),
@@ -126,45 +148,37 @@ class LT_OT_obj_dropper(bpy.types.Operator):
             )         
 
         return {"FINISHED"}
-    
 
-class LT_OT_load_user_presets(bpy.types.Operator):
+class LT_OT_exterminatus(bpy.types.Operator):
     
-    bl_idname = "lt.load_user_presets"
-    bl_label = "load user presets"
-    bl_description = "Loads all actions from the Blend file defined in the addon preferences."
+    bl_idname = "lt.exterminatus"
+    bl_label = "Restart Tailor"
+    bl_description = "Removes all Lazy Tailor data from your file"
+
 
     def execute(self, context):
-        user_lib_path = bpy.context.preferences.addons[__package__].preferences.user_lib_path
-        try:
-            LT_loadActions(user_lib_path)
-        except KeyError:
-            
-            LT_Error_Popup(
-                pop_title="Error: Unable to load Pre-Sets",
-                error_reason="No valid data found in the provided filepath. ",
-                suggestion="Either the path is invalid, or there are no actions inside the Blend file."
-                )
-            
-        return {"FINISHED"}
-    
 
-class LT_OT_save_user_presets(bpy.types.Operator):
-    
-    bl_idname = "lt.save_user_preset"
-    bl_label = "Save User Pre-Sets"
-    bl_description = "Saves all Actions created by the user to the Blend file defined in the addon preferences'"
 
-    
-    def execute(self, context):
+        bpy.data.libraries.remove(bpy.data.libraries["LazyTalior_Supply_Closet.blend"])
         
-        user_lib_path = bpy.context.preferences.addons[__package__].preferences.user_lib_path
-
-        data_blocks = set(action for action in bpy.data.actions if not action.name.startswith("LT_"))
-
-        bpy.data.libraries.write(user_lib_path, data_blocks, fake_user=True)
+        for A in bpy.data.actions:
+            if A.get("LT_Default") is not None:
+                A.use_fake_user = False
+                bpy.data.actions.remove(A)
         
+        corpse_wagon = ("Local_Mannequin", "Local_Mannequin_Base")
+        
+        #what came first, the object or the data?
+        #trick question, its data, so the object gets deleted first.
+        for O in bpy.data.objects:
+            if O.name in corpse_wagon:
+                O.data.use_fake_user = False
+                bpy.data.objects.remove(O)
+
+        for ARM in bpy.data.armatures:
+            if ARM .name in corpse_wagon:
+                bpy.data.armatures.remove(ARM)
+
+        bpy.data.objects.remove(bpy.data.objects["LT_DontTouchIsBones"])  
+        bpy.context.scene.lt_util_props.InitBool = False
         return {"FINISHED"}
-
-
-
