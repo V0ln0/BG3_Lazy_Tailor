@@ -84,11 +84,16 @@ class BodyShop:
             bpy.ops.pose.user_transforms_clear(only_selected=False)
         bpy.data.objects[self.LM].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
 
+
+    #NOTE pretty sure I can just get rid of this and replace it with a "set_base"
     def FullReset(self): #used to completely reset the LMB back to its defualt
         
         bpy.data.objects[self.LMB].data = bpy.data.armatures[self.LMB]
         self.BoneVis_Validator(stretch_To=True)
         bpy.ops.pose.armature_apply(selected=False)
+
+
+
 
     def set_base(self):
         bpy.ops.pose.user_transforms_clear(only_selected=False)
@@ -162,32 +167,72 @@ class LT_OT_constraints(bpy.types.Operator):
         
         return {"FINISHED"}
 
-
-#TODO: fix this
-class LT_OT_set_base_tailor(bpy.types.Operator):
-
-    bl_idname = "lt.set_base_tailor"
-    bl_label = "Set Base"
-    bl_description = "Changes the resting postion of the mannequin to the body type selected in 'From:'"
-
-
+base_bones= (
     
+    ("LT_HUM_F_BASE", "HUM_F", "Fits body type 1(BT1) races & fem Githyanki.", 1),
+    ("LT_HUM_M_BASE", "HUM_M", "Fits body type 2(BT2) races & masc Githyanki.", 2),
+    ("LT_HUM_FS_BASE", "HUM_FS", "Fits body type 3(BT3) races + fem Dragonborn & Half-Orcs", 3),
+    ("LT_HUM_MS_BASE", "HUM_MS", "Fits body type 4(BT4) races + masc Dragonborn & Half-Orcs", 4),
+    ("LT_SHORT_F_BASE", "SHORT_F", "Fits fem Gnomes and Halflings", 5),
+    ("LT_SHORT_M_BASE", "SHORT_M", "Fits masc Gnomes and Halflings", 6),
+    ("LT_DWR_F_BASE", "DWR_F", "Fits fem Dwarves", 7),
+    ("LT_DWR_M_BASE", "DWR_M", "Fits masc Dwarves", 8),
+)    
+
+
+class LT_OT_set_from_tailor(bpy.types.Operator):
+
+    bl_idname = "lt.set_from_tailor"
+    bl_label = "Set From Body"
+    bl_description = "Sets the body you are converting FROM."
+    
+    from_bones: bpy.props.EnumProperty(
+        name="Set From Body",
+        items=base_bones,
+        default=(1)
+    )
+
     def execute(self, context):
 
-        lt_util_props = context.scene.lt_util_props
         active_check.force_active()
         bpy.ops.object.mode_set(mode="POSE")
         
         # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
         SewingPattern = BodyShop(
-            to_Arm=("LT_" + (lt_util_props.from_body) + "_BASE"),
+            from_Arm=self.from_bones,
             )
 
         SewingPattern.set_base()
+        # SewingPattern.change_base()
   
         return {"FINISHED"}
     
+class LT_OT_set_to_tailor(bpy.types.Operator):
 
+    bl_idname = "lt.set_to_tailor"
+    bl_label = "Set To Body"
+    bl_description = "Sets the body you are converting TO."
+    
+    to_bones: bpy.props.EnumProperty(
+        name="Set To Body",
+        items=base_bones,
+        default=(1)
+    )
+
+    def execute(self, context):
+
+        active_check.force_active()
+        bpy.ops.object.mode_set(mode="POSE")
+        
+        # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
+        SewingPattern = BodyShop(
+            to_Arm=self.to_bones,
+            )
+
+        # SewingPattern.set_base()
+        SewingPattern.change_base()
+  
+        return {"FINISHED"}
 
 
 class LT_OT_defualt_preset_tailor(bpy.types.Operator):
@@ -254,7 +299,7 @@ def Error_Popup(pop_title: str, error_reason: str, suggestion: str):
     bpy.context.window_manager.popup_menu(draw, title = pop_title, icon = 'ERROR')
 
 
-#TODO: this is not finished
+#TODO: this has not been tested fully
 class LT_OT_apply_user_preset(bpy.types.Operator):
 
     bl_idname = "lt.apply_user_preset"
@@ -278,7 +323,7 @@ class LT_OT_apply_user_preset(bpy.types.Operator):
 
         return {"FINISHED"}
      
-#TODO: could probabbly merge these two into one operator but its fine for now
+
 class LT_OT_load_user_presets(bpy.types.Operator):
     
     bl_idname = "lt.load_user_presets"
@@ -313,15 +358,15 @@ class LT_OT_save_user_presets(bpy.types.Operator):
     
     bl_idname = "lt.save_user_preset"
     bl_label = "Save User Pre-Sets"
-    bl_description = "Saves all Actions created by the user to the Blend file defined in the addon preferences'"
+    bl_description = "Saves all Actions created by the user to the Blend file defined in the addon preferences."
 
     
     def execute(self, context):
         
         user_lib_path = bpy.context.preferences.addons[__package__].preferences.user_lib_path
-        
+       
         if user_lib_path != 'set me!':
-            data_blocks = set(action for action in bpy.data.actions if not action.name.startswith("LT_"))
+            data_blocks = set(action for action in bpy.data.actions if action.get('LT_Default') is None)
             bpy.data.libraries.write(user_lib_path, data_blocks, fake_user=True)
         
         else:
@@ -334,68 +379,89 @@ class LT_OT_save_user_presets(bpy.types.Operator):
         return {"FINISHED"}
 
 
-
-class LT_MT_about_preset_menu(bpy.types.Menu):
+       
+class LT_OT_set_preset_info(bpy.types.Operator):
     
-    bl_idname = "LT_MT_about_preset_menu"
-    bl_label = "About Pre-Set"
+    bl_idname = "lt.set_preset_info"
+    bl_label = "Set Info"
+    bl_description = "Sets custom porperties on the active action so that Lazy Tailor knows how to apply your Pre-Set."
 
-    dating_easter_egg = (
+    def execute(self, context):
+        active = bpy.context.scene.lt_actions
+        user_props = bpy.context.scene.lt_user_props
+        active_type = bpy.context.scene.lt_user_props.type_action
+        
+        active['LT_Type'] = active_type
+        if active_type == "ADDATIVE":
+            active['LT_From_Body'] = "N/A"
+            active['LT_To_Body'] = "N/A"
+        else:
+            active['LT_From_Body'] = user_props.from_body_action
+            active['LT_To_Body'] = user_props.to_body_action
             
-        "Long walks on the beach",
-        "The smell of burnt toast",
-        "The thrill of the kill",
-        "Taylor Swift",
-        "The colour purple",
-        "Licking lamp posts in winter",
-        "Being toxic on reddit",
-        "Sending Volno $5",
-        "Going on advantures",
-        "Knitting",
-        "Pirating Adobe products",
-        "You",
-        "Being in the cuck vent"
-        )
-            
+        active['LT_Creator'] = user_props.creator
+        active['LT_Description'] = user_props.desc
 
-    def get_short_name(self, propname):
-        #this is awful
+        return {"FINISHED"}
 
-        return (bpy.context.scene.lt_actions[propname].replace('LT_','')).replace('_BASE','')
+
+
+#this is hacky as fuck but I just don't care anymore
+#this entire class is for appeasing the ui spirits
+class preset_info:
+    #fucking bpy.context restricted accsess ass
+    @classmethod
+    def is_lt_action(self):
+
+        return bool(bpy.context.scene.lt_actions is not None)
     
-
+    @classmethod
+    def read_prop(self, propname: str, lt_action):
+        #check if the prop exists and retruns a placehodler if it dosen't 
+        if lt_action[propname] is not None:
+            return lt_action[propname]
+        else:
+            return "N/A"
+   
+    @classmethod    
+    def get_short_name(self, name:str):
         
-    def draw(self, context):
-        import random
-        egg_check = random.randint(1, 20)
+        return (name.replace('LT_','')).replace('_BASE','')
+    
+    @classmethod 
+    def is_not_defualt(self, lt_action):
+        #check to stop people messing with the defualt presets
+        return bool(lt_action.get('LT_Default') is None)
+    
+class preset_info_ui(preset_info):
+    
+    @classmethod
+    def draw_preset_info(cls, self, context, layout, UI_action):
+       
+        lt_type = self.read_prop(propname='LT_Type', lt_action=UI_action)
 
-        dating_easter_egg = (
-            
-            "Long walks on the beach",
-            "The smell of burnt toast",
-            "The thrill of the kill",
-            "Taylor Swift",
-            "The colour purple",
-            "Licking lamp posts in winter",
-            "Being toxic on reddit",
-            "Sending Volno $5",
-            "Going on advantures",
-            "Knitting",
-            "Pirating Adobe products",
-            "You",
-            "Being in the cuck vent"
-        )
-        
-        lt_actions = bpy.context.scene.lt_actions
-        lt_type = lt_actions['LT_Type']
-        layout = self.layout
-
-        layout.label(text="Name: " + lt_actions.name)
+        layout.label(text="Name: " + UI_action.name)
         layout.label(text="Type: " + lt_type)
         if lt_type == "FULL":
-            layout.label(text="Converts From: " + self.get_short_name('LT_From_Body'))
-            layout.label(text="Converts To: " + self.get_short_name('LT_To_Body'))
-        layout.label(text="Creator: " + lt_actions['LT_Creator'])
-        if egg_check == 20:
-            layout.label(text="Likes: " + dating_easter_egg[random.randint(0, 12)])
+            layout.label(text="Converts From: " + self.get_short_name(self.read_prop(propname='LT_From_Body', lt_action=UI_action)))
+            layout.label(text="Converts To: " + self.get_short_name(self.read_prop(propname='LT_To_Body', lt_action=UI_action)))
+        layout.label(text="Creator: " + self.read_prop(propname='LT_Creator', lt_action=UI_action))
+        layout.label(text="Description: " + self.read_prop(propname='LT_Description', lt_action=UI_action))
 
+
+class LT_MT_about_preset_scene_menu(preset_info_ui, bpy.types.Menu):
+    
+    bl_idname = "LT_MT_about_preset_scene_menu"
+    bl_label = "About Pre-Set"
+    
+    def draw(self, context):
+        self.draw_preset_info(self, context, self.layout, bpy.context.scene.lt_actions)
+        
+# class LT_MT_about_preset_dropsheet_menu(preset_info_ui, bpy.types.Menu):
+    
+#     bl_idname = "LT_MT_about_preset_dropsheet_menu"
+#     bl_label = "About Pre-Set"
+    
+#     def draw(self, context):
+#         self.draw_preset_info(self, context, self.layout, bpy.context.scene.lt_actions)
+        

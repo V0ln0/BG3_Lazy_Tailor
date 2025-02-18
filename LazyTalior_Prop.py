@@ -2,6 +2,7 @@ import bpy
 import os
 from os import path
 
+# TODO: read up bitch https://blender.stackexchange.com/questions/280695/bpy-layout-difference-between-various-enum-methods
 
 #BEHOLD... my enums
 base_body = (
@@ -47,7 +48,7 @@ base_bones= (
 preset_types= (
 
     ("FULL", "Full Body", "This pre-set is for converting from one body type to another. It will clear all existing transfroms.", 1),
-    ("ADD", "Addative", "This pre-set is addative, meaning that its intended to be combined/layerd with other pre-sets", 2)
+    ("ADDATIVE", "Addative", "This pre-set is addative, meaning that its intended to be combined/layerd with other pre-sets", 2)
 )
 mesh_refs = (
     
@@ -78,28 +79,12 @@ mesh_refs = (
 )
 
 
-# race_list = (
-    
-#     ("HUM", "Humans", "normies", 1),
-#     ("ELF", "Elf", "Knife Ears", 2),
-#     ("HEL", "Half-Elf", "Half Knife Ears", 3),
-#     ("TIF", "Tiefling", "Horny", 4),
-#     ("GTY", "Githyanki", "space frogs", 5),
-#     ("DGB", "Dragonborn", "scalie fucker", 6),
-#     ("HRC", "Half-Orc", "WAAAAAAAGH", 7),
-#     ("GNO", "Gnome", "you've been gnomed", 8),
-#     ("HFL", "Halfling", "fuck you tolkien", 9),
-#     ("DWR", "Dwarf", "Diggy Diggy Hole", 10)
-# )
-
-
 class lt_util_props(bpy.types.PropertyGroup):
 
     LibPath: bpy.props.StringProperty(
         name="LibPath",
         subtype='FILE_PATH',
         default=(os.path.join(path.dirname(__file__), os.pardir, "BG3_Lazy_Tailor", "library", "LazyTalior_Supply_Closet.blend")),
-        description="names of actions imported into the file"
     )
 
     InitBool: bpy.props.BoolProperty(
@@ -142,7 +127,13 @@ class lt_util_props(bpy.types.PropertyGroup):
 
     
 class lt_user_props(bpy.types.PropertyGroup):
-    
+
+    # user_alt_path: bpy.props.StringProperty(
+    #     name="Alternate Path",
+    #     subtype='FILE_PATH',
+    #     default="set me!",
+    #     description="Alternate filepath to load custom pre-sets from"
+    # )
     from_body_action: bpy.props.EnumProperty(
         name="From",
         description="Name of body that you are converting FROM",
@@ -165,12 +156,44 @@ class lt_user_props(bpy.types.PropertyGroup):
     )
     creator: bpy.props.StringProperty(
         name="Creator",
+        description="Who are you?",
         default="Larry Anne",
-        maxlen=64,
+        maxlen=32,
         )
     
-    preset_desc: bpy.props.StringProperty(
+    desc: bpy.props.StringProperty(
         name="Description",
+        description="Short description of what this pre-set does.",
         default="",
         maxlen=128,
         )
+
+
+
+
+# class egg:
+    
+#     @classmethod
+#     def draw_dating_egg(self, layout):
+#         import random
+        
+#         egg_check = random.randint(1, 20)
+#         dating_easter_egg = (
+            
+#             "Long walks on the beach",
+#             "The smell of burnt toast",
+#             "The thrill of the kill",
+#             "Taylor Swift",
+#             "The colour purple",
+#             "Licking lamp posts in winter",
+#             "Being toxic on reddit",
+#             "Sending Volno $5",
+#             "Going on advantures",
+#             "Knitting",
+#             "Pirating Adobe products",
+#             "You",
+#             "Being in the cuck vent"
+#         )
+        
+#         if egg_check == 20:
+#             layout.label(text="Likes: " + dating_easter_egg[random.randint(0, 12)])

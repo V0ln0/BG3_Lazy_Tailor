@@ -68,11 +68,7 @@ class LT_PT_tailor_AddonPreferences(bpy.types.AddonPreferences):
         layout.prop(self, "user_lib_path")
         layout.prop(self, "volno_debug")
 
-def is_action():
-    if bpy.context.scene.lt_actions is not None:
-        return True
-    else:
-        return False
+
 class LT_scene_master_panel:
     
     bl_space_type = 'PROPERTIES'
@@ -80,105 +76,117 @@ class LT_scene_master_panel:
     bl_category = "Lazy Talior"
     bl_context = "scene"
 
-    @classmethod
-    def draw_lazy_init_panel(cls, _context, layout):
+    # @classmethod
+    # def draw_init_header(cls, context, layout):
+    #     lt_util_props = bpy.context.scene.lt_util_props
+    #     box = layout.box()
 
+    #     if lt_util_props.InitBool == False: 
+    #         row = box.row()
+    #         row.alignment = 'CENTER'
+    #         row.label(text="Lazy Talior Status: NOT READY", icon='RADIOBUT_OFF')
+    #         row = box.row()
+    #         row.alignment = 'CENTER'
+    #         row.operator("lt.initialise", text="Initialise")
 
-        lt_util_props = bpy.context.scene.lt_util_props 
-        box = layout.box()
-        
-        if lt_util_props.InitBool == False: 
-            row = box.row()
-            row.label(text="Lazy Talior Status: NOT READY", icon='RADIOBUT_OFF')
-            row.operator("lt.initialise", text="Initialise")
-        else:
-            row = box.row()
-            row.label(text="Lazy Talior Status: READY", icon='RADIOBUT_ON') 
+    #     else:
+    #         row = box.row()
+    #         row.label(text="Lazy Talior Status: READY", icon='RADIOBUT_ON')
+    #         row.alignment = 'CENTER'
+    #         row = box.row()
+    #         row.alignment = 'CENTER'
+    #         row.enabled = False
+    #         row.operator("lt.initialise", text="Initialise")
+
 
 class LT_PT_lazy_panel_main(LT_scene_master_panel, bpy.types.Panel):
     
-    bl_label = "BG3 Lazy Talior"
+    bl_label = ""
     bl_idname = "LT_PT_lazy_panel_main"
     bl_category = "Lazy Talior"
 
-# to whoever sees this: this is a mess and I am sorry
-    def draw(self, context):
-        
-        lt_util_props = bpy.context.scene.lt_util_props      
 
-        self.draw_lazy_init_panel(context, self.layout)
+    def draw_header(self, context):
+        
         layout = self.layout
-        
-        #pulling this shit purely to disable the ui when the assets aren't loaded
-        sub_layout = layout.column()
-        sub_layout.enabled = lt_util_props.InitBool
-        
-        col = sub_layout.column()
+        row = layout.row()
+        row.label(text="BG3 Lazy Tailor")
+        if bpy.context.scene.lt_util_props.InitBool == False:
+            row.operator("lt.initialise", text="Initialise")
 
-        col.label(text="Mannequin Options: Basic")
-        col.separator(type='LINE')
-        col.separator(factor=0.5)
-    
-        col.prop(lt_util_props, "from_body")
-        col.prop(lt_util_props, "to_body")
-        col.separator(factor=0.5)
-        split = col.split(factor=0.65)
-        split_left = split.row()
-        split_right = split.column()
-        # op_col.operator("lt.set_base_tailor")
-
-        split_right.operator("lt.defualt_preset_tailor", text="Apply")
-        col = sub_layout.column()
-        col.separator(type='LINE')
-        # col.separator(factor=0.25)
-        col = sub_layout.column()
-        split = col.split(factor=0.35)
-        split_c = split.column()
-        split_c.operator("wm.call_menu", text="Finalise").name = "LT_MT_mass_apply_menu"
-        
-        props = split_c.operator("lt.confirm_choice", text="Reset")
-        props.the_thing = "reset Local_Mannequin"
-        props.op_name = "lt.mannequin_reset"
-
-        col.separator(type='LINE')
-
-
-
-class LT_PT_user_action_panel(LT_scene_master_panel, bpy.types.Panel):
-    
-    bl_label = "Advanced Options"
-    bl_idname = "LT_PT_user_action_panel"
-    bl_parent_id = "LT_PT_lazy_panel_main"
-    bl_order = 0
-    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         
         lt_util_props = bpy.context.scene.lt_util_props
-        lt_actions = bpy.context.scene.lt_actions
-        # action_lock = is_action()
         layout = self.layout
-        layout.enabled = lt_util_props.InitBool
-        col = layout.column()
-        split = col.split(factor=0.65)
-        split_left = split.column()
-        split_left.label(text="Custom Pre-Sets:")
-        split_right = split.column()
-        split_right.operator("lt.load_user_presets", text="Load")
-        col.separator(type='LINE')
-        col.prop(context.scene, "lt_actions", text="")
+
+       
+        # #pulling this shit purely to disable the ui when the assets aren't loaded
+        # sub_layout = layout.column()
+        # sub_layout.enabled = lt_util_props.InitBool
+        if bpy.context.scene.lt_util_props.InitBool == True:
+            col = layout.column(align= True)
+            col.label(text="Mannequin Options: Basic")
+            col.separator(type='LINE')
+            col.separator(factor=0.5)
+        
+            col.prop(lt_util_props, "from_body")
+            col.prop(lt_util_props, "to_body")
+            col.separator(factor=0.5)
+            col.separator(type='LINE')
+            split = col.split(factor=0.65)
+            split_left = split.column(align= True)
+            split_left.operator("wm.call_menu", text="Finalise").name = "LT_MT_mass_apply_menu"
+            split_left.scale_y = 2.0
+            split_right = split.column(align= True)
+            split_right.operator("lt.defualt_preset_tailor", text="Apply")
+            props = split_right.operator("lt.confirm_choice", text="Reset")
+            props.the_thing = "reset Local_Mannequin"
+            props.op_name = "lt.mannequin_reset"
+            
+            # col = layout.column()
+            # col.separator(type='LINE')
+            # col = layout.column()
+
+            # col.operator("wm.call_menu", text="Finalise").name = "LT_MT_mass_apply_menu"
+            
 
 
-        split = col.split(factor=0.65)
+            col.separator(type='LINE')
+
+
+
+
+class LT_PT_lazy_advanced_panel(LT_scene_master_panel, preset_info_ui, bpy.types.Panel):
+    
+    bl_label = "Mannequin Options: Custom"
+    bl_idname = "LT_PT_lazy_advanced_panel"
+    bl_parent_id = "LT_PT_lazy_panel_main"
+    bl_order = 0
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        return bool(context.scene.lt_util_props.InitBool)
+    
+    def draw(self, context):
+        
+
+        action_lock = self.is_lt_action()
+        layout = self.layout
+        layout.prop(context.scene, "lt_actions", text="Pre-Set")
+        layout.separator(type='LINE')
+
+        split = layout.split(factor=0.65)
         split_a = split.column()
-        split_a.label(text="Pre-Set Info:")
+        info = split_a.row()
+        info.enabled = action_lock
+        info.menu("LT_MT_about_preset_scene_menu")
         split_b = split.column()
         split_b.operator("lt.apply_user_preset", text="Apply")
-        info = layout.row()
-        info.enabled = is_action()
-        info.operator("wm.call_menu", text="More Info").name = "LT_MT_about_preset_menu"
+        layout.separator(type='LINE')
+        layout.operator("lt.load_user_presets", text="Load Pre-Sets")
 
-        
 
 
 class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
@@ -189,14 +197,16 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
     bl_order = 1
     bl_options = {'DEFAULT_CLOSED'}
     
-
+    @classmethod
+    def poll(cls, context):
+        return bool(context.scene.lt_util_props.InitBool)
+    
     def draw(self, context):
         
-        lt_util_props = bpy.context.scene.lt_util_props
         tailor_prefs = bpy.context.preferences.addons[__name__].preferences
-
+        lt_util_props = bpy.context.scene.lt_util_props
+        
         layout = self.layout
-        layout.enabled = lt_util_props.InitBool
         col = layout.column()
         col.label(text="Mesh Options:")
         
@@ -210,8 +220,29 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         row.operator("wm.call_menu", text="Create LODs").name = "LT_MT_create_lod_menu"
         row.operator("wm.call_menu", text="Set LODs").name = "LT_MT_set_lod_menu"
         layout.separator(type='LINE')
-
-
+        
+        layout.label(text="Helper Assets:")
+        box = layout.box()
+        col = box.column()
+        
+        col.label(text="Export Ready Armature:")
+        split = col.split(factor=0.65)
+        split_a = split.column()
+        split_a.prop(lt_util_props,"gilf_bones", text="") 
+        
+        split_b = split.column()
+        split_b.operator("lt.obj_dropper", text="Append").obj_name= lt_util_props.gilf_bones
+        col = box.column()
+        
+        col.label(text="Body Reference:")
+        split = col.split(factor=0.65)
+        split_a = split.column()
+        split_a.prop(lt_util_props,"ref_bodies", text="")
+        
+        split_b = split.column()
+        split_b.operator("lt.obj_dropper", text="Append").obj_name= lt_util_props.ref_bodies
+        box.separator(factor=0.1)
+        
         if tailor_prefs.volno_debug == True:
             box = layout.box()
             box.label(text="Debug Tools")
@@ -225,39 +256,6 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
             check_start.warn_message = "WARNING: this will PURGE all Lazy Tailor data from the current file. Does not remove user pre-sets"
 
 
-class LT_PT_export_helpers_panel(LT_scene_master_panel, bpy.types.Panel):
-    
-    bl_label = "Export Eelpers"
-    bl_idname = "LT_PT_export_helpers_panel"
-    bl_parent_id = "LT_PT_lazy_panel_main"
-    bl_order = 2
-    bl_options = {'DEFAULT_CLOSED'}
-
-    def draw(self, context):
-        
-        lt_util_props = bpy.context.scene.lt_util_props
-        
-        layout = self.layout
-        layout.enabled = lt_util_props.InitBool
-        
-
-        layout.label(text="Export Ready Armature:")
-        col = layout.column()
-        split = col.split(factor=0.65)
-        split_a = split.column()
-        split_a.prop(lt_util_props,"gilf_bones", text="") 
-        split_b = split.column()
-        split_b.operator("lt.obj_dropper", text="Append").obj_name= lt_util_props.gilf_bones
-
-        layout.label(text="Body Reference:")
-        col = layout.column()
-        split = col.split(factor=0.65)
-        split_a = split.column()
-        split_a.prop(lt_util_props,"ref_bodies", text="")
-        split_b = split.column()
-        split_b.operator("lt.obj_dropper", text="Append").obj_name= lt_util_props.ref_bodies
-
-
 class LT_PT_mannequin_vis(bpy.types.Panel):
 
     bl_space_type = 'VIEW_3D'
@@ -265,78 +263,134 @@ class LT_PT_mannequin_vis(bpy.types.Panel):
     bl_category = "BG3 LT"
     bl_label = 'Mannequin'
     bl_context = 'posemode'
-
+    
+    @classmethod
+    def poll(cls, context):
+        return bool(context.active_object.name == 'Local_Mannequin')
+    
     def draw(self, context):
 
         layout = self.layout
-        mannequin_obj = bpy.data.objects['Local_Mannequin']
         mannequin_data = bpy.data.armatures['Local_Mannequin']
+        
+        row = layout.row(align=True)
+        row.label(text="Control Visibility")
+        box = layout.box()
+        grid = box.grid_flow(row_major=True, columns=2, even_columns=True)
 
-        if context.active_object is not mannequin_obj:
-            pass
+        grid.prop(mannequin_data.collections["CTRL_Torso"], "is_visible", text="Torso Main", toggle=True)
+        grid.prop(mannequin_data.collections["CTRL_Arms"], "is_visible", text="Arms Main", toggle=True)            
+        grid.prop(mannequin_data.collections["CTRL_Hands"], "is_visible", text="Hands Main", toggle=True)            
+        grid.prop(mannequin_data.collections["CTRL_Legs"], "is_visible", text="Legs Main", toggle=True)
 
-        else:
-            row = layout.row(align=True)
-            row.label(text="Control Visibility")
-            box = layout.box()
-            grid = box.grid_flow(row_major=True, columns=2, even_columns=True)
 
-            grid.prop(mannequin_data.collections["CTRL_Torso"], "is_visible", text="Torso Main", toggle=True)
-            grid.prop(mannequin_data.collections["CTRL_Arms"], "is_visible", text="Arms Main", toggle=True)            
-            grid.prop(mannequin_data.collections["CTRL_Hands"], "is_visible", text="Hands Main", toggle=True)            
-            grid.prop(mannequin_data.collections["CTRL_Legs"], "is_visible", text="Legs Main", toggle=True)
-
-#returns prop as string for use in ui
-def get_lt_prop(preset, propname):
-
-    if preset.get(propname) is not None:
-        return preset[propname]
-
-class LT_PT_user_preset_panel(bpy.types.Panel):
-
+class LT_action_master_panel:
+    
     bl_space_type = 'DOPESHEET_EDITOR'
     bl_region_type = 'UI'
     bl_category = "BG3 LT"
-    bl_label = 'Pre-Set Options'
     bl_context = "data"
     _context_path = "active_action"
     _property_type = bpy.types.Action
-
-
-
-
+    
     #I still have no idea how classmethods work and at this point I am afraid to ask
     #I also have no idea how this is pulling the active action
     @classmethod
     def poll(cls, context):
         return bool(context.active_action)
-    
 
+class LT_PT_edit_preset_main_panel(LT_action_master_panel, preset_info, bpy.types.Panel):
+
+    bl_label = "Pre-Set Editor"
+    bl_idname = "LT_PT_edit_preset_main_panel"
+    bl_category = "BG3 LT"
+    
+    # @classmethod
+    # def poll(cls, context):
+    #     return bool(context.scene.lt_util_props.InitBool)
+    
     def draw(self, context):
         action = context.active_action
-        lt_util_props = bpy.context.scene.lt_util_props
+        layout = self.layout
 
+        layout.label(text=action.name)
+        # layout.operator("wm.call_menu", text="About This Pre-Set").name = "LT_MT_about_preset_scene_menu"
+        layout.operator_menu_enum("lt.set_from_tailor", "from_bones")
+        layout.operator_menu_enum("lt.set_to_tailor", "to_bones")
+        layout.separator(type='LINE')
+        
+    #I still have no idea how classmethods work and at this point I am afraid to ask
+    #I also have no idea how this is pulling the active action
+
+
+# class LT_PT_edit_preset_sub_panel(LT_action_master_panel, preset_info_ui, bpy.types.Panel):
+    
+#     bl_label = "Pre-Set Info"
+#     bl_idname = "LT_PT_edit_preset_sub_panel"
+#     bl_parent_id = "LT_PT_edit_preset_main_panel"
+#     bl_order = 0
+#     bl_options = {'DEFAULT_CLOSED'}
+
+#     @classmethod
+#     def poll(cls, context):
+#         return bool(context.scene.lt_util_props.InitBool)
+    
+#     def draw(self, context):
+#         action = context.active_action
+#         layout = self.layout
+#         self.draw_preset_info(self, context, layout, action)
+        
+
+
+
+class LT_PT_edit_preset_edit_panel(LT_action_master_panel, preset_info, bpy.types.Panel):
+    
+    bl_label = "Edit Pre-Set Info"
+    bl_idname = "LT_PT_edit_preset_edit_panel"
+    bl_parent_id = "LT_PT_edit_preset_main_panel"
+    bl_order = 1
+    bl_options = {'DEFAULT_CLOSED'}
+
+    # @classmethod
+    # def poll(cls, context):
+    #     return bool(context.scene.lt_util_props.InitBool)
+    
+    def draw(self, context):
+        action = context.active_action
+        lt_user_props = bpy.context.scene.lt_user_props
+        hands_off = self.is_not_defualt(action)
+        
         
         layout = self.layout
-        layout.enabled = lt_util_props.InitBool
-        row = layout.row()
-        row.alignment = 'CENTER'
-        # row.label(text=action.name, icon='MOD_CLOTH')
-        layout.label(text=action.name)
-        layout.separator(type='LINE')
-        col = layout.column()
-        col.prop(lt_util_props, "from_body_action")
-        col.prop(lt_util_props, "to_body_action")
-        col.prop(lt_util_props, "type_action")
-        col.prop(lt_util_props, "creator")
-        check_save = layout.operator("lt.confirm_choice", text="Save")
+        if hands_off == False:
+            row = layout.row()
+            row.alignment = 'CENTER'
+            row.label(text="Warning: Defualt Pre-Sets can not be edited.")
+            layout.separator(type='LINE')
+
+        lock_col = layout.column()
+        lock_col.enabled = hands_off
+        lock_col.label(text="Edit Pre-Set Info:")
+        box = lock_col.box()
+
+        col = box.column()
+        col.prop(lt_user_props, "type_action")
+        col.prop(lt_user_props, "from_body_action")
+        col.prop(lt_user_props, "to_body_action")
+        col.prop(lt_user_props, "creator")
+        col.prop(lt_user_props, "desc")
+        row = box.row()
+        row.alignment = 'RIGHT'
+        row.operator("lt.set_preset_info", text="Set Info")
+
+
+        check_save =  lock_col.operator("lt.confirm_choice", text="Save to File")
         check_save.the_thing = "save ALL user pre-sets in this file"
         check_save.warn_extra = True
         check_save.warn_message = "Warning: This will overwrite all pre-sets with the same name."
         check_save.op_name = "lt.save_user_presets"
 
         layout.separator(type='LINE')
-
 
 def confirm_Popup(do_that: str, op_name: str, extra: bool, extra_con: str): 
 
@@ -385,13 +439,14 @@ classes = (
     LT_OT_initialise,
     LT_OT_defualt_preset_tailor,
     lt_util_props,
+    lt_user_props,
     LT_PT_tailor_AddonPreferences,
     LT_OT_mannequin_reset,
-    LT_OT_set_base_tailor,
+    LT_OT_set_from_tailor,
+    LT_OT_set_to_tailor,
     LT_PT_mannequin_vis,
-    LT_PT_user_action_panel,
+    LT_PT_lazy_advanced_panel,
     LT_PT_utility_panel,
-    LT_PT_export_helpers_panel,
     LT_OT_export_order_setter,
     LT_OT_mass_apply_modifier,
     LT_MT_mass_apply_menu,
@@ -407,8 +462,12 @@ classes = (
     LT_OT_confirm_choice,
     LT_OT_obj_dropper,
     LT_OT_exterminatus,
-    LT_PT_user_preset_panel,
-    LT_MT_about_preset_menu,
+    LT_PT_edit_preset_main_panel,
+    LT_MT_about_preset_scene_menu,
+    # LT_PT_edit_preset_sub_panel,
+    LT_PT_edit_preset_edit_panel,
+    LT_OT_set_preset_info,
+    
 
     )
 
@@ -416,7 +475,7 @@ classes = (
 # filter to prevent the user from selecting the defualt actuion presets in the ui
 def lt_base_action_poll(self, action): 
 
-    if action.get('LT_Default') is not None:
+    if action.get('LT_Default') is None:
         return action
 
 
@@ -431,10 +490,12 @@ def register():
         bpy.utils.register_class(_class)
     
     bpy.types.Scene.lt_util_props = bpy.props.PointerProperty(type=lt_util_props)
+    bpy.types.Scene.lt_user_props = bpy.props.PointerProperty(type=lt_user_props)
 
 def unregister():
 
     del bpy.types.Scene.lt_util_props
+    del bpy.types.Scene.lt_user_props
     del bpy.types.Scene.lt_actions
     for _class in classes: 
         bpy.utils.unregister_class(_class)  
