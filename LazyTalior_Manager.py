@@ -33,6 +33,16 @@ HOW THIS WORKS: MANNEQUINS ARE LIKE ONIONS
 # class contains functions needed to control the swapping of presets/armatures
 class BodyShop:
     #TODO: ask Nav about cleaning this up
+    #to nav: blender restictes the useage of bpy.context and bpy.data when registiring classes
+    #LMB and LM here ALWAYS need to be bpy.data.objects['Local_Mannequin_Base'] and bpy.data.objects['Local_Mannequin']
+    # but I have no idea how to do that in a way that blender will not yell at me for
+    # def __init__(self, PreSet='', from_Arm='', to_Arm='', LMB='Local_Mannequin_Base', LM='Local_Mannequin'):
+        # self.PreSet = PreSet # name(string) of the action being called
+        # self.from_Arm = bpy.data.armatures[from_Arm] #name(string) of the body armature that we're changing from, not always needed 
+        # self.to_Arm = bpy.data.armatures[to_Arm] # name(string) of the body armature that we're changing too, not always needed 
+        # self.LMB = bpy.data.objects['Local_Mannequin_Base']
+        # self.LM = bpy.data.objects['Local_Mannequin']
+
     def __init__(self, PreSet='', from_Arm='', to_Arm='', LMB='Local_Mannequin_Base', LM='Local_Mannequin'):
         
         self.PreSet = PreSet # name(string) of the action being called
@@ -53,7 +63,7 @@ class BodyShop:
                     PN.data.bones.active = b.bone                               
                     bpy.ops.constraint.childof_set_inverse(constraint="Child Of", owner="BONE")
     
-    def stretch_to_mass_set(self): #NOTE: not sure if this is actualy needed
+    def stretch_to_mass_set(self): #NOTE: 99% sure that this is not actualy needed, but I'm keeping it as it was usefull as a debugging tool.
         PN = bpy.data.objects[self.LM]
         for b in PN.pose.bones:
             for c in b.constraints:
@@ -72,7 +82,7 @@ class BodyShop:
         
         self.child_of_mass_invert()
         
-        if stretch_To == True: #only needs to be true when also applying a new rest pose
+        if stretch_To == True: 
             self.stretch_to_mass_set() 
         
         CB.is_visible = False
@@ -84,31 +94,23 @@ class BodyShop:
             bpy.ops.pose.user_transforms_clear(only_selected=False)
         bpy.data.objects[self.LM].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
 
-
-    #NOTE pretty sure I can just get rid of this and replace it with a "set_base"
-    def FullReset(self): #used to completely reset the LMB back to its defualt
+    
+    def set_base(self, full_reset=False):
         
-        bpy.data.objects[self.LMB].data = bpy.data.armatures[self.LMB]
-        self.BoneVis_Validator(stretch_To=True)
-        bpy.ops.pose.armature_apply(selected=False)
-
-
-
-
-    def set_base(self):
+        base = self.from_Arm
+        if full_reset == True: #used to completely reset the LMB back to its defualt
+            base = self.LMB
+        
         bpy.ops.pose.user_transforms_clear(only_selected=False)
-        bpy.data.objects[self.LMB].data = bpy.data.armatures[self.from_Arm]
-        
-        #LM then needs to be corrected
+        bpy.data.objects[self.LMB].data = bpy.data.armatures[base]
         self.BoneVis_Validator()
         bpy.ops.pose.armature_apply(selected=False)
         #sets new rest pose, was originaly optional as its not always nessiscary but its better to just do it everytime than constantly check
-    
+
     def change_base(self):
 
         bpy.ops.pose.user_transforms_clear(only_selected=False)
         bpy.data.objects[self.LMB].data = bpy.data.armatures[self.to_Arm]
-
         #LM then needs to be corrected
         self.BoneVis_Validator()
 
@@ -122,9 +124,13 @@ class BodyShop:
         bpy.data.objects[self.LM].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
 
 
-class active_check:
+# norb's hell.
+# tldr: many of blender's functions/operators are context dependent on what the selected and/or active object is and what mode it is in
+# is great for the end user in the ui, but a nightmare coding wise
 
-    def force_active(ObjName='Local_Mannequin'): # norb's hell
+class active_check: 
+
+    def force_active(ObjName='Local_Mannequin'): 
         
         try:
             bpy.ops.object.mode_set(mode="OBJECT")
@@ -145,9 +151,8 @@ class LT_OT_mannequin_reset(bpy.types.Operator):
     def execute(self, context):
 
         active_check.force_active()
-        
         bpy.ops.object.mode_set(mode="POSE")
-        BodyShop().FullReset()
+        BodyShop().set_base(full_reset=True)
         return {"FINISHED"}
 
 class LT_OT_constraints(bpy.types.Operator):
@@ -198,13 +203,8 @@ class LT_OT_set_from_tailor(bpy.types.Operator):
         bpy.ops.object.mode_set(mode="POSE")
         
         # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
-        SewingPattern = BodyShop(
-            from_Arm=self.from_bones,
-            )
+        SewingPattern = BodyShop(from_Arm=self.from_bones).set_base()
 
-        SewingPattern.set_base()
-        # SewingPattern.change_base()
-  
         return {"FINISHED"}
     
 class LT_OT_set_to_tailor(bpy.types.Operator):
@@ -225,13 +225,8 @@ class LT_OT_set_to_tailor(bpy.types.Operator):
         bpy.ops.object.mode_set(mode="POSE")
         
         # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
-        SewingPattern = BodyShop(
-            to_Arm=self.to_bones,
-            )
+        BodyShop(to_Arm=self.to_bones).change_base()
 
-        # SewingPattern.set_base()
-        SewingPattern.change_base()
-  
         return {"FINISHED"}
 
 
@@ -456,12 +451,4 @@ class LT_MT_about_preset_scene_menu(preset_info_ui, bpy.types.Menu):
     
     def draw(self, context):
         self.draw_preset_info(self, context, self.layout, bpy.context.scene.lt_actions)
-        
-# class LT_MT_about_preset_dropsheet_menu(preset_info_ui, bpy.types.Menu):
-    
-#     bl_idname = "LT_MT_about_preset_dropsheet_menu"
-#     bl_label = "About Pre-Set"
-    
-#     def draw(self, context):
-#         self.draw_preset_info(self, context, self.layout, bpy.context.scene.lt_actions)
         

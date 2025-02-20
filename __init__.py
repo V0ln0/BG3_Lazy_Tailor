@@ -21,7 +21,6 @@ Created by Volno
 # Warning: this is both my first Blender addon and my first "big" project in Python
 # also I am dyslexic, typos abound
 import bpy
-import textwrap
 
 from . LazyTalior_Manager import *
 from . LazyTalior_Closet import *
@@ -34,7 +33,7 @@ bl_info = {
     "name": "BG3 Lazy Tailor(BETA)",
     "description": "A tool aimed at making the proccsess of refiting outfits for various races/bodytypes for use in Baldur's Gate 3 easier.",
     "author": "Volno",
-    "version": (0, 1, 2),
+    "version": (0, 1, 5),
     "blender": (4, 0, 0),
     "location": "Scene > Properties > BG3LazyTailor Tools tab",
     "warning": "baby's first Blender addon",
