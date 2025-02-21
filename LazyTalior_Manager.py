@@ -43,40 +43,40 @@ class BodyShop:
         # self.LMB = bpy.data.objects['Local_Mannequin_Base']
         # self.LM = bpy.data.objects['Local_Mannequin']
 
-    def __init__(self, PreSet='', from_Arm='', to_Arm='', LMB='Local_Mannequin_Base', LM='Local_Mannequin'):
-        
-        self.PreSet = PreSet # name(string) of the action being called
-        self.from_Arm = from_Arm #name(string) of the body armature that we're changing from, not always needed 
-        self.to_Arm = to_Arm # name(string) of the body armature that we're changing too, not always needed 
-        self.LMB = LMB
-        self.LM = LM
+    def __init__(self, from_Arm='Local_Mannequin_Base', to_Arm='Local_Mannequin_Base'):
 
+        self.from_Arm = bpy.data.armatures[from_Arm] #name(string) of the body armature that we're changing from, not always needed 
+        self.to_Arm = bpy.data.armatures[to_Arm] # name(string) of the body armature that we're changing too, not always needed 
+        self.LMB = bpy.data.objects['Local_Mannequin_Base']
+        self.LMB_A = bpy.data.armatures['Local_Mannequin_Base']
+        self.LM = bpy.data.objects['Local_Mannequin']
+        self.LM_A = bpy.data.armatures['Local_Mannequin']
     
     # upon swapping armature data, the 'childof' constraints need to have their inverse set again, lest you wish to see some sort of demonic gibon
     def child_of_mass_invert(self):
-        PN = bpy.data.objects[self.LM]
-        for b in PN.pose.bones:
+
+        for b in self.LM.pose.bones:
             for c in b.constraints:
                 if c.type == "CHILD_OF":
                     context_py = bpy.context.copy()
                     context_py["constraint"] = c
-                    PN.data.bones.active = b.bone                               
+                    self.LM.data.bones.active = b.bone                               
                     bpy.ops.constraint.childof_set_inverse(constraint="Child Of", owner="BONE")
     
     def stretch_to_mass_set(self): #NOTE: 99% sure that this is not actualy needed, but I'm keeping it as it was usefull as a debugging tool.
-        PN = bpy.data.objects[self.LM]
-        for b in PN.pose.bones:
+
+        for b in self.LM.pose.bones:
             for c in b.constraints:
                 if c.type == "STRETCH_TO":
                     context_py = bpy.context.copy()
                     context_py["constraint"] = c
-                    PN.data.bones.active = b.bone                               
+                    self.LM.data.bones.active = b.bone                               
                     bpy.ops.constraint.stretchto_reset(constraint="Stretch To", owner='BONE')
 
     # can't effect constraints on bones that are not visable in the viewport
     def BoneVis_Validator(self, stretch_To=False):
         
-        CB = bpy.data.armatures[self.LM].collections["Deform_Bones"]
+        CB = self.LM_A.collections["Deform_Bones"]
         if CB.is_visible == False:
             CB.is_visible = True
         
@@ -87,22 +87,22 @@ class BodyShop:
         
         CB.is_visible = False
 
-    def ApplyPreSet(self, Is_Addative=False): #"Is_Addative" for when applying a preset on top of existing deformations without clearing them
+    def ApplyPreSet(self, PreSet:str, Is_Addative=False): #"Is_Addative" for when applying a preset on top of existing deformations without clearing them
         
         bpy.ops.pose.select_all(action='DESELECT')
         if Is_Addative == False:
             bpy.ops.pose.user_transforms_clear(only_selected=False)
-        bpy.data.objects[self.LM].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
+        self.LM.pose.apply_pose_from_action(PreSet)
 
     
     def set_base(self, full_reset=False):
         
         base = self.from_Arm
         if full_reset == True: #used to completely reset the LMB back to its defualt
-            base = self.LMB
+            base = self.LMB_A 
         
         bpy.ops.pose.user_transforms_clear(only_selected=False)
-        bpy.data.objects[self.LMB].data = bpy.data.armatures[base]
+        self.LMB.data = base
         self.BoneVis_Validator()
         bpy.ops.pose.armature_apply(selected=False)
         #sets new rest pose, was originaly optional as its not always nessiscary but its better to just do it everytime than constantly check
@@ -110,18 +110,18 @@ class BodyShop:
     def change_base(self):
 
         bpy.ops.pose.user_transforms_clear(only_selected=False)
-        bpy.data.objects[self.LMB].data = bpy.data.armatures[self.to_Arm]
+        self.LMB.data = self.to_Arm
         #LM then needs to be corrected
         self.BoneVis_Validator()
 
 
     # functions sperated out like this so that we are able to call on indvidual parts
-    def BodySwap(self): 
+    def BodySwap(self, PreSet): 
         
         self.set_base()                           
         self.change_base()
         bpy.ops.pose.select_all(action='DESELECT')
-        bpy.data.objects[self.LM].pose.apply_pose_from_action(bpy.data.actions[self.PreSet])
+        self.LM.pose.apply_pose_from_action(PreSet)
 
 
 # norb's hell.
@@ -203,7 +203,7 @@ class LT_OT_set_from_tailor(bpy.types.Operator):
         bpy.ops.object.mode_set(mode="POSE")
         
         # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
-        SewingPattern = BodyShop(from_Arm=self.from_bones).set_base()
+        BodyShop(from_Arm=self.from_bones).set_base()
 
         return {"FINISHED"}
     
@@ -274,13 +274,11 @@ class LT_OT_defualt_preset_tailor(bpy.types.Operator):
             Codebook = bpy.data.actions[self.M_PreSets[lt_util_props.to_body].value]
         
         SewingPattern = BodyShop(
-            
-            PreSet=Codebook.name,
             from_Arm=Codebook['LT_From_Body'], 
             to_Arm=Codebook['LT_To_Body']
             )
         
-        SewingPattern.BodySwap()
+        SewingPattern.BodySwap(PreSet=Codebook)
         
         return {"FINISHED"}
 
@@ -310,11 +308,11 @@ class LT_OT_apply_user_preset(bpy.types.Operator):
 
         if User_Action["LT_Type"] == 'FULL':
 
-            BodyShop(PreSet=User_Action.name, from_Arm=User_Action['LT_From_Body'], to_Arm=User_Action['LT_To_Body']).BodySwap()
+            BodyShop(from_Arm=User_Action['LT_From_Body'], to_Arm=User_Action['LT_To_Body']).BodySwap(PreSet=User_Action)
 
         if  User_Action["LT_Type"] == 'ADDITIVE':
             
-            BodyShop(PreSet=User_Action.name).ApplyPreSet(Is_Addative=True)
+            BodyShop().ApplyPreSet(PreSet=User_Action, Is_Addative=True)
 
         return {"FINISHED"}
      
@@ -382,15 +380,17 @@ class LT_OT_set_preset_info(bpy.types.Operator):
     bl_description = "Sets custom porperties on the active action so that Lazy Tailor knows how to apply your Pre-Set."
 
     def execute(self, context):
-        active = bpy.context.scene.lt_actions
+        active = bpy.data.objects["Local_Mannequin"].animation_data.action
         user_props = bpy.context.scene.lt_user_props
         active_type = bpy.context.scene.lt_user_props.type_action
         
-        active['LT_Type'] = active_type
+        
         if active_type == "ADDATIVE":
+            active['LT_Type'] = active_type
             active['LT_From_Body'] = "N/A"
             active['LT_To_Body'] = "N/A"
         else:
+            active['LT_Type'] = active_type
             active['LT_From_Body'] = user_props.from_body_action
             active['LT_To_Body'] = user_props.to_body_action
             
@@ -413,9 +413,9 @@ class preset_info:
     @classmethod
     def read_prop(self, propname: str, lt_action):
         #check if the prop exists and retruns a placehodler if it dosen't 
-        if lt_action[propname] is not None:
+        try: 
             return lt_action[propname]
-        else:
+        except KeyError:
             return "N/A"
    
     @classmethod    
@@ -431,8 +431,14 @@ class preset_info:
 class preset_info_ui(preset_info):
     
     @classmethod
-    def draw_preset_info(cls, self, context, layout, UI_action):
+    def draw_preset_info(cls, self, context, layout, is_dopeheet:bool):
        
+        if is_dopeheet == True:
+            UI_action = bpy.data.objects["Local_Mannequin"].animation_data.action
+        else:
+            UI_action = bpy.context.scene.lt_actions
+
+
         lt_type = self.read_prop(propname='LT_Type', lt_action=UI_action)
 
         layout.label(text="Name: " + UI_action.name)
@@ -450,5 +456,4 @@ class LT_MT_about_preset_scene_menu(preset_info_ui, bpy.types.Menu):
     bl_label = "About Pre-Set"
     
     def draw(self, context):
-        self.draw_preset_info(self, context, self.layout, bpy.context.scene.lt_actions)
-        
+        self.draw_preset_info(self, context, self.layout, is_dopeheet=False)

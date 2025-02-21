@@ -304,9 +304,9 @@ class LT_PT_edit_preset_main_panel(LT_action_master_panel, preset_info, bpy.type
     bl_idname = "LT_PT_edit_preset_main_panel"
     bl_category = "BG3 LT"
     
-    # @classmethod
-    # def poll(cls, context):
-    #     return bool(context.scene.lt_util_props.InitBool)
+    @classmethod
+    def poll(cls, context):
+        return bool(bpy.data.objects["Local_Mannequin"].animation_data.action is not None)
     
     def draw(self, context):
         action = context.active_action
@@ -317,28 +317,29 @@ class LT_PT_edit_preset_main_panel(LT_action_master_panel, preset_info, bpy.type
         layout.operator_menu_enum("lt.set_from_tailor", "from_bones")
         layout.operator_menu_enum("lt.set_to_tailor", "to_bones")
         layout.separator(type='LINE')
-        
-    #I still have no idea how classmethods work and at this point I am afraid to ask
-    #I also have no idea how this is pulling the active action
+        layout.menu("LT_MT_about_preset_dopeheet_menu")
 
 
-# class LT_PT_edit_preset_sub_panel(LT_action_master_panel, preset_info_ui, bpy.types.Panel):
+
+class LT_PT_edit_preset_info_panel(LT_action_master_panel, preset_info_ui, bpy.types.Panel):
     
-#     bl_label = "Pre-Set Info"
-#     bl_idname = "LT_PT_edit_preset_sub_panel"
-#     bl_parent_id = "LT_PT_edit_preset_main_panel"
-#     bl_order = 0
-#     bl_options = {'DEFAULT_CLOSED'}
-
-#     @classmethod
-#     def poll(cls, context):
-#         return bool(context.scene.lt_util_props.InitBool)
+    bl_label = "Pre-Set Info"
+    bl_idname = "LT_PT_edit_preset_info_panel"
+    bl_parent_id = "LT_PT_edit_preset_main_panel"
+    bl_order = 0
+    bl_options = {'DEFAULT_CLOSED'}
     
-#     def draw(self, context):
-#         action = context.active_action
-#         layout = self.layout
-#         self.draw_preset_info(self, context, layout, action)
-        
+    @classmethod
+    def poll(cls, context):
+        return bool(bpy.data.objects["Local_Mannequin"].animation_data.action is not None)
+    
+
+    #TODO: hyphonate this shit
+    def draw(self, context):
+        action = context.active_action
+        layout = self.layout
+        box = layout.box()
+        self.draw_preset_info(self, context, box, is_dopeheet=True)
 
 
 
@@ -349,10 +350,10 @@ class LT_PT_edit_preset_edit_panel(LT_action_master_panel, preset_info, bpy.type
     bl_parent_id = "LT_PT_edit_preset_main_panel"
     bl_order = 1
     bl_options = {'DEFAULT_CLOSED'}
-
-    # @classmethod
-    # def poll(cls, context):
-    #     return bool(context.scene.lt_util_props.InitBool)
+    
+    @classmethod
+    def poll(cls, context):
+        return bool(bpy.data.objects["Local_Mannequin"].animation_data.action is not None)
     
     def draw(self, context):
         action = context.active_action
@@ -455,6 +456,7 @@ classes = (
     LT_MT_set_lod_menu,
     LT_OT_so_no_head,
     LT_OT_apply_user_preset,
+    LT_MT_about_preset_scene_menu,
     LT_OT_load_user_presets,
     LT_OT_save_user_presets,
     LT_OT_constraints,
@@ -462,10 +464,9 @@ classes = (
     LT_OT_obj_dropper,
     LT_OT_exterminatus,
     LT_PT_edit_preset_main_panel,
-    LT_MT_about_preset_scene_menu,
-    # LT_PT_edit_preset_sub_panel,
     LT_PT_edit_preset_edit_panel,
     LT_OT_set_preset_info,
+    LT_PT_edit_preset_info_panel,
     
 
     )
