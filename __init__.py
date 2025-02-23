@@ -33,7 +33,7 @@ bl_info = {
     "name": "BG3 Lazy Tailor(BETA)",
     "description": "A tool aimed at making the proccsess of refiting outfits for various races/bodytypes for use in Baldur's Gate 3 easier.",
     "author": "Volno",
-    "version": (0, 1, 8),
+    "version": (0, 1, 9),
     "blender": (4, 0, 0),
     "location": "Scene > Properties > BG3LazyTailor Tools tab",
     "warning": "baby's first Blender addon",

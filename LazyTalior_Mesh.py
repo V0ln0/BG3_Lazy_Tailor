@@ -89,7 +89,7 @@ class LT_OT_mass_apply_modifier(bpy.types.Operator):
         for C in meshes:
             if C.type == "MESH":
                 for M in C.modifiers:
-                    if M.type == self.modifier_type:
+                    if M.show_viewport == True and M.type == self.modifier_type:
                         context_py = bpy.context.copy()
                         context_py["modifier"] = M
                         bpy.context.view_layer.objects.active = C  
