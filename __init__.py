@@ -33,7 +33,7 @@ bl_info = {
     "name": "BG3 Lazy Tailor(BETA)",
     "description": "A tool aimed at making the proccsess of refiting outfits for various races/bodytypes for use in Baldur's Gate 3 easier.",
     "author": "Volno",
-    "version": (0, 1, 5),
+    "version": (0, 1, 8),
     "blender": (4, 0, 0),
     "location": "Scene > Properties > BG3LazyTailor Tools tab",
     "warning": "baby's first Blender addon",
@@ -75,27 +75,7 @@ class LT_scene_master_panel:
     bl_category = "Lazy Talior"
     bl_context = "scene"
 
-    # @classmethod
-    # def draw_init_header(cls, context, layout):
-    #     lt_util_props = bpy.context.scene.lt_util_props
-    #     box = layout.box()
 
-    #     if lt_util_props.InitBool == False: 
-    #         row = box.row()
-    #         row.alignment = 'CENTER'
-    #         row.label(text="Lazy Talior Status: NOT READY", icon='RADIOBUT_OFF')
-    #         row = box.row()
-    #         row.alignment = 'CENTER'
-    #         row.operator("lt.initialise", text="Initialise")
-
-    #     else:
-    #         row = box.row()
-    #         row.label(text="Lazy Talior Status: READY", icon='RADIOBUT_ON')
-    #         row.alignment = 'CENTER'
-    #         row = box.row()
-    #         row.alignment = 'CENTER'
-    #         row.enabled = False
-    #         row.operator("lt.initialise", text="Initialise")
 
 
 class LT_PT_lazy_panel_main(LT_scene_master_panel, bpy.types.Panel):
@@ -121,8 +101,6 @@ class LT_PT_lazy_panel_main(LT_scene_master_panel, bpy.types.Panel):
 
        
         # #pulling this shit purely to disable the ui when the assets aren't loaded
-        # sub_layout = layout.column()
-        # sub_layout.enabled = lt_util_props.InitBool
         if bpy.context.scene.lt_util_props.InitBool == True:
             col = layout.column(align= True)
             col.label(text="Mannequin Options: Basic")
@@ -306,7 +284,7 @@ class LT_PT_edit_preset_main_panel(LT_action_master_panel, preset_info, bpy.type
     
     @classmethod
     def poll(cls, context):
-        return bool(bpy.data.objects["Local_Mannequin"].animation_data.action is not None)
+        return bool(context.active_object.name == 'Local_Mannequin' and context.active_action)
     
     def draw(self, context):
         action = context.active_action
@@ -331,7 +309,7 @@ class LT_PT_edit_preset_info_panel(LT_action_master_panel, preset_info_ui, bpy.t
     
     @classmethod
     def poll(cls, context):
-        return bool(bpy.data.objects["Local_Mannequin"].animation_data.action is not None)
+        return bool(context.active_object.name == 'Local_Mannequin' and context.active_action)
     
 
     #TODO: hyphonate this shit
@@ -353,7 +331,7 @@ class LT_PT_edit_preset_edit_panel(LT_action_master_panel, preset_info, bpy.type
     
     @classmethod
     def poll(cls, context):
-        return bool(bpy.data.objects["Local_Mannequin"].animation_data.action is not None)
+        return bool(context.active_object.name == 'Local_Mannequin')
     
     def draw(self, context):
         action = context.active_action
@@ -388,7 +366,7 @@ class LT_PT_edit_preset_edit_panel(LT_action_master_panel, preset_info, bpy.type
         check_save.the_thing = "save ALL user pre-sets in this file"
         check_save.warn_extra = True
         check_save.warn_message = "Warning: This will overwrite all pre-sets with the same name."
-        check_save.op_name = "lt.save_user_presets"
+        check_save.op_name = "lt.save_user_preset"
 
         layout.separator(type='LINE')
 
