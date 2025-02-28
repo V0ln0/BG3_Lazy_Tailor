@@ -33,24 +33,15 @@ HOW THIS WORKS: MANNEQUINS ARE LIKE ONIONS
 # class contains functions needed to control the swapping of presets/armatures
 class BodyShop:
     #TODO: ask Nav about cleaning this up
-    #to nav: blender restictes the useage of bpy.context and bpy.data when registiring classes
-    #LMB and LM here ALWAYS need to be bpy.data.objects['Local_Mannequin_Base'] and bpy.data.objects['Local_Mannequin']
-    # but I have no idea how to do that in a way that blender will not yell at me for
-    # def __init__(self, PreSet='', from_Arm='', to_Arm='', LMB='Local_Mannequin_Base', LM='Local_Mannequin'):
-        # self.PreSet = PreSet # name(string) of the action being called
-        # self.from_Arm = bpy.data.armatures[from_Arm] #name(string) of the body armature that we're changing from, not always needed 
-        # self.to_Arm = bpy.data.armatures[to_Arm] # name(string) of the body armature that we're changing too, not always needed 
-        # self.LMB = bpy.data.objects['Local_Mannequin_Base']
-        # self.LM = bpy.data.objects['Local_Mannequin']
 
-    def __init__(self, from_Arm='Local_Mannequin_Base', to_Arm='Local_Mannequin_Base'):
+    def __init__(self, from_Arm='LT_Mannequin_Base', to_Arm='LT_Mannequin_Base', LMB='Local_Mannequin_Base', LM='Local_Mannequin'):
 
         self.from_Arm = bpy.data.armatures[from_Arm] #name(string) of the body armature that we're changing from, not always needed 
         self.to_Arm = bpy.data.armatures[to_Arm] # name(string) of the body armature that we're changing too, not always needed 
-        self.LMB = bpy.data.objects['Local_Mannequin_Base']
-        self.LMB_A = bpy.data.armatures['Local_Mannequin_Base']
-        self.LM = bpy.data.objects['Local_Mannequin']
-        self.LM_A = bpy.data.armatures['Local_Mannequin']
+        self.LMB = bpy.data.objects[LMB]
+        self.LMB_A = bpy.data.armatures[LMB]
+        self.LM = bpy.data.objects[LM]
+        self.LM_A = bpy.data.armatures[LM]
     
     # upon swapping armature data, the 'childof' constraints need to have their inverse set again, lest you wish to see some sort of demonic gibon
     def child_of_mass_invert(self):
@@ -159,17 +150,22 @@ class LT_OT_constraints(bpy.types.Operator):
 
     bl_idname = "lt.constraints"
     bl_label = "BONE ZONE"
-    bl_description = "Manual fix for stretch_to and child_of constaints when swaping armatures"
+    bl_description = "Manual fix for stretch_to and child_of or stretch_to constaints when swaping armatures"
     
     stretch_to_bool: bpy.props.BoolProperty(
         name="stretch_to_bool",
         default=False
         )
+    
+    is_debug: bpy.props.BoolProperty(
+    default=False
+    )
 
     def execute(self, context):
-
-        BodyShop().BoneVis_Validator(stretch_To=self.stretch_to_bool)
-        
+        if self.is_debug == False:
+            BodyShop().BoneVis_Validator(stretch_To=self.stretch_to_bool)
+        else:
+            BodyShop(LMB='LT_Mannequin_Base', LM='LT_Mannequin').BoneVis_Validator(stretch_To=self.stretch_to_bool)
         return {"FINISHED"}
 
 base_bones= (
@@ -239,46 +235,45 @@ class LT_OT_defualt_preset_tailor(bpy.types.Operator):
     #NOTE: this is dumb but I want the defualt presets to be as easy to use as possible for the enduser 
     #that means putting the training wheels on
 
-    #god damn blender restricting bpy.data
-    class F_PreSets(Enum):
-
-        GTY ="LT_GTY_F_BDY"
-        HUM_S = "LT_HUM_FS_BDY"
-        DGB = "LT_DGB_F_BDY"
-        GNO = "LT_GNO_F_BDY"
-        HFL = "LT_HFL_F_BDY"
-        DWR = "LT_DWR_F_BDY"
-        HRT = "LT_HUM_F_FTM"
-    
-    class M_PreSets(Enum):
-    
-        GTY = "LT_GTY_M_BDY"
-        HUM_S = "LT_HUM_MS_BDY"
-        DGB = "LT_DGB_M_BDY"
-        GNO = "LT_GNO_M_BDY"
-        HFL = "LT_HFL_M_BDY"
-        DWR = "LT_DWR_M_BDY"
-        HRT = "LT_HUM_M_MTF"
-
-
     def execute(self, context):
 
         lt_util_props = context.scene.lt_util_props
+        
+        #god damn blender restricting bpy.data
+        F_PreSets = Enum('F_PreSets', [
+            ('GTY', bpy.data.actions['LT_GTY_F_BDY']),
+            ('HUM_S', bpy.data.actions['LT_HUM_FS_BDY']),
+            ('DGB', bpy.data.actions['LT_DGB_F_BDY']),
+            ('GNO', bpy.data.actions['LT_GNO_F_BDY']),
+            ('HFL', bpy.data.actions['LT_HFL_F_BDY']),
+            ('DWR', bpy.data.actions['LT_DWR_F_BDY']), 
+            ('HRT', bpy.data.actions['LT_HUM_F_FTM']), 
+            ])
+                
+        M_PreSets = Enum('M_PreSets', [
+            ('GTY', bpy.data.actions['LT_GTY_M_BDY']),
+            ('HUM_S', bpy.data.actions['LT_HUM_MS_BDY']),
+            ('DGB', bpy.data.actions['LT_DGB_M_BDY']),
+            ('GNO', bpy.data.actions['LT_GNO_M_BDY']),
+            ('HFL', bpy.data.actions['LT_HFL_M_BDY']),
+            ('DWR', bpy.data.actions['LT_DWR_M_BDY']), 
+            ('HRT', bpy.data.actions['LT_HUM_M_MTF']), 
+            ])
         
         active_check.force_active()
         bpy.ops.object.mode_set(mode="POSE")
 
         if lt_util_props.from_body == "HUM_F":
-            Codebook = bpy.data.actions[self.F_PreSets[lt_util_props.to_body].value]
+            action = F_PreSets[lt_util_props.to_body].value
         else:
-            Codebook = bpy.data.actions[self.M_PreSets[lt_util_props.to_body].value]
+            action = M_PreSets[lt_util_props.to_body].value
         
         SewingPattern = BodyShop(
-            from_Arm=Codebook['LT_From_Body'], 
-            to_Arm=Codebook['LT_To_Body']
+            from_Arm=action['LT_From_Body'], 
+            to_Arm=action['LT_To_Body']
             )
         
-        SewingPattern.BodySwap(PreSet=Codebook)
+        SewingPattern.BodySwap(PreSet=action)
         
         return {"FINISHED"}
 

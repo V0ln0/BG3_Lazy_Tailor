@@ -1,5 +1,5 @@
 '''
-Copyright (C) 2024 VOLNO
+Copyright (C) 2025 VOLNO
 https://github.com/V0ln0
 
 Created by Volno
@@ -30,11 +30,11 @@ from . LazyTalior_Mesh import *
 
 
 bl_info = {
-    "name": "BG3 Lazy Tailor(BETA)",
+    "name": "BG3 Lazy Tailor",
     "description": "A tool aimed at making the proccsess of refiting outfits for various races/bodytypes for use in Baldur's Gate 3 easier.",
     "author": "Volno",
-    "version": (0, 1, 9),
-    "blender": (4, 0, 0),
+    "version": (1, 0, 0),
+    "blender": (4, 2, 0),
     "location": "Scene > Properties > BG3LazyTailor Tools tab",
     "warning": "baby's first Blender addon",
     "wiki_url": "",
@@ -74,8 +74,6 @@ class LT_scene_master_panel:
     bl_region_type = 'WINDOW'
     bl_category = "Lazy Talior"
     bl_context = "scene"
-
-
 
 
 class LT_PT_lazy_panel_main(LT_scene_master_panel, bpy.types.Panel):
@@ -120,14 +118,6 @@ class LT_PT_lazy_panel_main(LT_scene_master_panel, bpy.types.Panel):
             props = split_right.operator("lt.confirm_choice", text="Reset")
             props.the_thing = "reset Local_Mannequin"
             props.op_name = "lt.mannequin_reset"
-            
-            # col = layout.column()
-            # col.separator(type='LINE')
-            # col = layout.column()
-
-            # col.operator("wm.call_menu", text="Finalise").name = "LT_MT_mass_apply_menu"
-            
-
 
             col.separator(type='LINE')
 
@@ -180,7 +170,7 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
     
     def draw(self, context):
         
-        tailor_prefs = bpy.context.preferences.addons[__name__].preferences
+
         lt_util_props = bpy.context.scene.lt_util_props
         
         layout = self.layout
@@ -220,18 +210,38 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         split_b.operator("lt.obj_dropper", text="Append").obj_name= lt_util_props.ref_bodies
         box.separator(factor=0.1)
         
-        if tailor_prefs.volno_debug == True:
-            box = layout.box()
-            box.label(text="Debug Tools")
-            box.operator("lt.constraints", text="Child Of")
-            props = box.operator("lt.constraints", text="Stretch To")
-            props.stretch_to_bool = True
-            check_start =  box.operator("lt.confirm_choice", text="Restart")
-            check_start.the_thing = "restart Lazy Tailor"
-            check_start.op_name = "lt.exterminatus"
-            check_start.warn_extra = True
-            check_start.warn_message = "WARNING: this will PURGE all Lazy Tailor data from the current file. Does not remove user pre-sets"
 
+
+class LT_PT_debug_panel(LT_scene_master_panel, bpy.types.Panel):
+    
+    bl_label = "Debug Tools"
+    bl_idname = "LT_PT_debug_panel"
+    bl_parent_id = "LT_PT_lazy_panel_main"
+    bl_order = 2
+    bl_options = {'DEFAULT_CLOSED'}
+   
+    @classmethod
+    def poll(cls, context):
+        return bool(bpy.context.preferences.addons[__name__].preferences.volno_debug)
+    
+    def draw(self, context):    
+        layout = self.layout
+
+
+        layout.operator_menu_enum("lt.set_from_tailor", "from_bones")
+        layout.operator_menu_enum("lt.set_to_tailor", "to_bones")
+    
+        layout.operator("lt.constraints", text="Child Of").is_debug = True
+        props = layout.operator("lt.constraints", text="Stretch To")
+        props.is_debug = True
+        props.stretch_to_bool = True
+        
+        
+        check_start =  layout.operator("lt.confirm_choice", text="Restart")
+        check_start.the_thing = "restart Lazy Tailor"
+        check_start.op_name = "lt.exterminatus"
+        check_start.warn_extra = True
+        check_start.warn_message = "WARNING: this will PURGE all Lazy Tailor data from the current file. Does not remove user pre-sets"
 
 class LT_PT_mannequin_vis(bpy.types.Panel):
 
@@ -243,7 +253,7 @@ class LT_PT_mannequin_vis(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        return bool(context.active_object.name == 'Local_Mannequin')
+        return bool(context.active_object['Local_Mannequin'] and bpy.context.scene.lt_util_props.InitBool)
     
     def draw(self, context):
 
@@ -274,7 +284,7 @@ class LT_action_master_panel:
     #I also have no idea how this is pulling the active action
     @classmethod
     def poll(cls, context):
-        return bool(context.active_action)
+        return bool(context.active_action and bpy.data.object['Local_Mannequin'] is not None)
 
 class LT_PT_edit_preset_main_panel(LT_action_master_panel, preset_info, bpy.types.Panel):
 
@@ -445,12 +455,13 @@ classes = (
     LT_PT_edit_preset_edit_panel,
     LT_OT_set_preset_info,
     LT_PT_edit_preset_info_panel,
+    LT_PT_debug_panel,
     
 
     )
 
 
-# filter to prevent the user from selecting the defualt actuion presets in the ui
+# filter to prevent the user from selecting the defualt action presets in the ui
 def lt_base_action_poll(self, action): 
 
     if action.get('LT_Default') is None:

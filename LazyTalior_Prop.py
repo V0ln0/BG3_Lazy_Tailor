@@ -7,19 +7,19 @@ from os import path
 #BEHOLD... my enums
 base_body = (
     
-    ("HUM_F", "Human(Fem)", "Hu-mon feeeeeeeemale", 1),
-    ("HUM_M", "Human(Masc)", "We're just normal men", 2)
+    ("HUM_F", "Human(Fem)", "Body Type 1 aka 'HUM_F' or 'BT1'", 1),
+    ("HUM_M", "Human(Masc)", "Body Type 2 aka 'HUM_M' or 'BT2", 2)
 )
 
 base_preset_list = (
 
-    ("GTY", "Githyanki", "space frogs", 1),
-    ("DGB", "Dragonborn", "scalie fucker", 2),
-    ("HUM_S", "Human(Strong)", "roids", 3),
-    ("GNO", "Gnome", "you've been gnomed", 4),
-    ("HFL", "Halfling", "fuck you tolkien", 5),
-    ("DWR", "Dwarf", "Diggy Diggy Hole", 6),
-    ("HRT", "FTM/MTF", "transes your gender", 7),
+    ("GTY", "Githyanki", "Converts Humans to Githyanki", 1),
+    ("DGB", "Dragonborn", "Converts Humans to DragonbornB", 2),
+    ("HUM_S", "Human(Strong)", "Converts Humans(regular) to Humans(strong)", 3),
+    ("GNO", "Gnome", "Converts Humans to Gnomes", 4),
+    ("HFL", "Halfling", "Converts Humans to Halfling", 5),
+    ("DWR", "Dwarf", "Converts Humans to Dwarves", 6),
+    ("HRT", "FTM/MTF", "Converts BT1 to BT2 or vice versa", 7),
 )
 
 granny_bones= (
@@ -90,9 +90,8 @@ class lt_util_props(bpy.types.PropertyGroup):
     InitBool: bpy.props.BoolProperty(
         name="InitBool",
         default=False
-        ) #stops the user from doubleing up assets, todo: add system to refresh blend file's assets
+        ) #check to stop the user importing assets twice or attempting to run the addon while things aren't loaded
     
-    #might need to move these into a panel prop if we wanna do custom icons
     from_body: bpy.props.EnumProperty(
         name="From",
         description="Name of body that you are converting FROM",
@@ -105,12 +104,7 @@ class lt_util_props(bpy.types.PropertyGroup):
         items=base_preset_list,
         default=(3),
     )
-    # race_names: bpy.props.EnumProperty(
-    #     name="Race",
-    #     description="Names Of the BG3's playable races",
-    #     items=race_list,
-    #     default=(1)
-    # )
+
     gilf_bones: bpy.props.EnumProperty(
         name="GR2 Armature",
         description="Export ready armature.",
@@ -128,12 +122,7 @@ class lt_util_props(bpy.types.PropertyGroup):
     
 class lt_user_props(bpy.types.PropertyGroup):
 
-    # user_alt_path: bpy.props.StringProperty(
-    #     name="Alternate Path",
-    #     subtype='FILE_PATH',
-    #     default="set me!",
-    #     description="Alternate filepath to load custom pre-sets from"
-    # )
+
     from_body_action: bpy.props.EnumProperty(
         name="From",
         description="Name of body that you are converting FROM",
@@ -164,7 +153,7 @@ class lt_user_props(bpy.types.PropertyGroup):
     desc: bpy.props.StringProperty(
         name="Description",
         description="Short description of what this pre-set does.",
-        default="",
+        default="My Cool Pre-set :)",
         maxlen=128,
         )
 

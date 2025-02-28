@@ -3,22 +3,6 @@ import bpy
 import os
 
 
-
-def VersionCheck():
-
-    if bpy.app.version < (4, 0, 0):
-        return False
-    else:
-        return True
-
-def VersionError_Popup(): 
-
-    def draw(self, context):
-       self.layout.label(text="Lazy Tailor requires Blender 4.0.0 or above, please download the latest version from Blender.org.")
-       self.layout.label(text="Remember: you can have more than one copy of Blender instaled!")
-        
-    bpy.context.window_manager.popup_menu(draw, title = "Warning: Incompatible Version of Blender detected", icon = 'ERROR')
-
 def ensure_collection(Cname:str) -> bpy.types.Collection:
 
     try:
@@ -30,6 +14,7 @@ def ensure_collection(Cname:str) -> bpy.types.Collection:
         bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children[link_to.name]
 
     return link_to
+
 #same as ensure_collection but instead links to a specific collection instead of scene.collection
 def ensure_collection_child(Cname:str, Pcol) -> bpy.types.Collection:
 
@@ -43,6 +28,27 @@ def ensure_collection_child(Cname:str, Pcol) -> bpy.types.Collection:
         link_to = bpy.data.collections[Cname]
     return link_to
 
+#Bone collections didn't exist pior to around 4.2.0
+#Can't get people to install the right version no matter how many times I tell em to
+#so now it won't start unless you version of blender is correct
+def VersionError_Popup(): 
+
+    def draw(self, context):
+       self.layout.label(text="Lazy Tailor requires Blender 4.2.0 or above, please download the latest version from Blender.org.")
+       self.layout.label(text="Remember: you can have more than one copy of Blender instaled!")
+        
+    bpy.context.window_manager.popup_menu(draw, title = "Warning: Incompatible Version of Blender detected", icon = 'ERROR')
+
+
+'''
+addon is reliant on premade assets prseent in LazyTalior_Supply_Closet.blend
+step by step
+new collection called "Lazy Tailor Assets"(LTA) is created in user's current scene
+the collection with the assets "LT_DontTouchIsBones" (isBones) is linked to LTA as an instanced collection
+new subfolder in LTA is created(M) and objects LT_Mannequin and LT_Mannequin_Base are pulled out of LTA into it
+LT_Mannequin + LT_Mannequin_Base are made made into local data (both the object AND the armature data), the given a fake user
+bpy.context.scene.lt_util_props.InitBool is then set to True wich unlocks the ui
+'''
 class LT_OT_initialise(bpy.types.Operator):
 
     bl_idname = "lt.initialise"
@@ -50,8 +56,11 @@ class LT_OT_initialise(bpy.types.Operator):
     bl_description = "Imports assets needed by the addon into your current Blend file. You only need to run this once."
 
     def execute(self, context):
+        
+        
+        VersionCheck = bool(bpy.app.version > (4, 2, 0))
 
-        if VersionCheck() == False:
+        if VersionCheck == False:
             VersionError_Popup()
         else:
             try:
@@ -72,7 +81,7 @@ class LT_OT_initialise(bpy.types.Operator):
                 instance_collections=True
                 
                 ) 
-            
+
             bpy.data.objects[isbones].hide_viewport = True
             MannequinCol = ensure_collection_child("Mannequins", EnsuredCol)
             Mannequins = [Mannequin for Mannequin in bpy.data.objects if Mannequin.name.startswith("LT_Mannequin")]
@@ -85,15 +94,17 @@ class LT_OT_initialise(bpy.types.Operator):
             bpy.ops.object.select_all(action='DESELECT')
             for M in MannequinCol.objects:
                 M.data.use_fake_user = True
-                M.data.name = "Local_" + (M.name.replace('LT_',''))
+                M.data.name = "Local_" + (M.name.replace('LT_','')) 
                 M.name = M.data.name
-
+                '''
+                renaming both obj and data because Blender HAS and WILL get confused if there is linked data with the same name as local data in the file
+                probbably dosen't help that these two idecialy names objects are in the same scene
+                due to LT_DontTouchIsBones being an instanced collection
+                '''
+            
             bpy.context.scene.lt_util_props.InitBool = True
         
         return {"FINISHED"}
-
-
-
 
 
 class LT_OT_obj_dropper(bpy.types.Operator):
