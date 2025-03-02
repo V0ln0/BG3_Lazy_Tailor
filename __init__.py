@@ -210,7 +210,7 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         box.separator(factor=0.1)
 
         layout.label(text="Danger Zone:")
-        check_start =  layout.operator("lt.confirm_choice", text="Restart Addon")
+        check_start =  layout.operator("lt.confirm_choice", text="Restart Lazy Tailor")
         check_start.the_thing = "restart Lazy Tailor"
         check_start.op_name = "lt.exterminatus"
         check_start.warn_extra = True
