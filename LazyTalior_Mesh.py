@@ -57,7 +57,6 @@ def LT_select_children(Parent):
     bpy.context.view_layer.objects.active = offspring[0]
     return offspring
 
-
 class LT_OT_mass_apply_modifier(bpy.types.Operator):
     
     bl_idname = "lt.mass_apply_modifier"

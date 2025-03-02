@@ -1,7 +1,7 @@
 import bpy
 import enum
 from enum import Enum
-
+from functools import partial
 
 '''
 HOW THIS WORKS: MANNEQUINS ARE LIKE ONIONS
@@ -136,7 +136,7 @@ class LT_OT_mannequin_reset(bpy.types.Operator):
 
     bl_idname = "lt.mannequin_reset"
     bl_label = "Mannequin Reset"
-    bl_description = "Sets the Mannequin back to its defualt state or clears user changes"
+    bl_description = "Sets the Mannequin back to its defualt state"
 
 
     def execute(self, context):
@@ -168,6 +168,14 @@ class LT_OT_constraints(bpy.types.Operator):
             BodyShop(LMB='LT_Mannequin_Base', LM='LT_Mannequin').BoneVis_Validator(stretch_To=self.stretch_to_bool)
         return {"FINISHED"}
 
+
+
+
+def check_linked():
+    is_action = bool(bpy.data.objects["Local_Mannequin"].animation_data.action)
+    if is_action == True:
+        bpy.ops.action.unlink()
+
 base_bones= (
     
     ("LT_HUM_F_BASE", "HUM_F", "Fits body type 1(BT1) races & fem Githyanki.", 1),
@@ -197,7 +205,7 @@ class LT_OT_set_from_tailor(bpy.types.Operator):
 
         active_check.force_active()
         bpy.ops.object.mode_set(mode="POSE")
-        
+        check_linked()
         # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
         BodyShop(from_Arm=self.from_bones).set_base()
 
@@ -219,7 +227,7 @@ class LT_OT_set_to_tailor(bpy.types.Operator):
 
         active_check.force_active()
         bpy.ops.object.mode_set(mode="POSE")
-        
+        check_linked()
         # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
         BodyShop(to_Arm=self.to_bones).change_base()
 
@@ -396,9 +404,14 @@ class LT_OT_set_preset_info(bpy.types.Operator):
 
 
 
+
 #this is hacky as fuck but I just don't care anymore
 #this entire class is for appeasing the ui spirits
+
+#update: what the fuck is this piece of shit 
+#TODO: rewrite all this crap, its causing to many propblems
 class preset_info:
+
     #fucking bpy.context restricted accsess ass
     @classmethod
     def is_lt_action(self):

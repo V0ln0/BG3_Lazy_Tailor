@@ -57,7 +57,6 @@ class LT_OT_initialise(bpy.types.Operator):
 
     def execute(self, context):
         
-        
         VersionCheck = bool(bpy.app.version > (4, 2, 0))
 
         if VersionCheck == False:
@@ -142,9 +141,7 @@ class LT_OT_exterminatus(bpy.types.Operator):
     bl_label = "Restart Tailor"
     bl_description = "Removes all Lazy Tailor data from your file"
 
-
     def execute(self, context):
-
 
         bpy.data.libraries.remove(bpy.data.libraries["LazyTalior_Supply_Closet.blend"])
         corpse_wagon = ("Local_Mannequin", "Local_Mannequin_Base")
@@ -163,3 +160,4 @@ class LT_OT_exterminatus(bpy.types.Operator):
         bpy.data.objects.remove(bpy.data.objects["LT_DontTouchIsBones"])  
         bpy.context.scene.lt_util_props.InitBool = False
         return {"FINISHED"}
+    

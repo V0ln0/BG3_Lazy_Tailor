@@ -118,7 +118,7 @@ class LT_PT_lazy_panel_main(LT_scene_master_panel, bpy.types.Panel):
             props = split_right.operator("lt.confirm_choice", text="Reset")
             props.the_thing = "reset Local_Mannequin"
             props.op_name = "lt.mannequin_reset"
-
+            props.warn_extra = False
             col.separator(type='LINE')
 
 
@@ -179,7 +179,6 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         
         col.operator("wm.call_menu", text="Set Export Order").name = "LT_MT_export_order_menu"
         col.operator("lt.so_no_head", text="Create Head_M")
-        
         layout.separator(type='LINE')
         layout.label(text="LOD factory:")
 
@@ -209,8 +208,13 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         split_b = split.column()
         split_b.operator("lt.obj_dropper", text="Append").obj_name= lt_util_props.ref_bodies
         box.separator(factor=0.1)
-        
 
+        layout.label(text="Danger Zone:")
+        check_start =  layout.operator("lt.confirm_choice", text="Restart Addon")
+        check_start.the_thing = "restart Lazy Tailor"
+        check_start.op_name = "lt.exterminatus"
+        check_start.warn_extra = True
+        check_start.warn_message = "WARNING: this will PURGE all Lazy Tailor data from the current file. Does not remove user pre-sets"
 
 class LT_PT_debug_panel(LT_scene_master_panel, bpy.types.Panel):
     
@@ -226,22 +230,24 @@ class LT_PT_debug_panel(LT_scene_master_panel, bpy.types.Panel):
     
     def draw(self, context):    
         layout = self.layout
-
-
-        layout.operator_menu_enum("lt.set_from_tailor", "from_bones")
-        layout.operator_menu_enum("lt.set_to_tailor", "to_bones")
-    
+        layout.separator(type='LINE')
         layout.operator("lt.constraints", text="Child Of").is_debug = True
         props = layout.operator("lt.constraints", text="Stretch To")
         props.is_debug = True
         props.stretch_to_bool = True
-        
-        
-        check_start =  layout.operator("lt.confirm_choice", text="Restart")
-        check_start.the_thing = "restart Lazy Tailor"
-        check_start.op_name = "lt.exterminatus"
-        check_start.warn_extra = True
-        check_start.warn_message = "WARNING: this will PURGE all Lazy Tailor data from the current file. Does not remove user pre-sets"
+
+        layout.separator(type='LINE')
+        row = layout.row()
+        row.alignment = 'CENTER'
+        row.label(text="TRANS RIGHTS ARE HUMAN RIGHTS")
+        row = layout.row()
+        row.alignment = 'CENTER'
+        row.label(icon='SEQUENCE_COLOR_05')
+        row.label(icon='SEQUENCE_COLOR_07')
+        row.label(icon='SNAP_FACE')
+        row.label(icon='SEQUENCE_COLOR_07')
+        row.label(icon='SEQUENCE_COLOR_05')
+
 
 class LT_PT_mannequin_vis(bpy.types.Panel):
 
@@ -253,7 +259,7 @@ class LT_PT_mannequin_vis(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        return bool(context.active_object['Local_Mannequin'] and bpy.context.scene.lt_util_props.InitBool)
+        return bool(context.active_object.name == 'Local_Mannequin')
     
     def draw(self, context):
 
@@ -280,13 +286,14 @@ class LT_action_master_panel:
     _context_path = "active_action"
     _property_type = bpy.types.Action
     
+    
     #I still have no idea how classmethods work and at this point I am afraid to ask
     #I also have no idea how this is pulling the active action
     @classmethod
     def poll(cls, context):
-        return bool(context.active_action and bpy.data.object['Local_Mannequin'] is not None)
+        return bool(bpy.context.scene.lt_util_props.InitBool)
 
-class LT_PT_edit_preset_main_panel(LT_action_master_panel, preset_info, bpy.types.Panel):
+class LT_PT_edit_preset_main_panel(LT_action_master_panel, bpy.types.Panel):
 
     bl_label = "Pre-Set Editor"
     bl_idname = "LT_PT_edit_preset_main_panel"
@@ -294,18 +301,16 @@ class LT_PT_edit_preset_main_panel(LT_action_master_panel, preset_info, bpy.type
     
     @classmethod
     def poll(cls, context):
-        return bool(context.active_object.name == 'Local_Mannequin' and context.active_action)
+        return bool(bpy.context.scene.lt_util_props.InitBool)
     
     def draw(self, context):
-        action = context.active_action
+        # action = context.active_action
         layout = self.layout
-
-        layout.label(text=action.name)
-        # layout.operator("wm.call_menu", text="About This Pre-Set").name = "LT_MT_about_preset_scene_menu"
+        layout.label(text="Mannequin Control:", icon="ARMATURE_DATA")
         layout.operator_menu_enum("lt.set_from_tailor", "from_bones")
         layout.operator_menu_enum("lt.set_to_tailor", "to_bones")
         layout.separator(type='LINE')
-        layout.menu("LT_MT_about_preset_dopeheet_menu")
+
 
 
 
@@ -315,33 +320,31 @@ class LT_PT_edit_preset_info_panel(LT_action_master_panel, preset_info_ui, bpy.t
     bl_idname = "LT_PT_edit_preset_info_panel"
     bl_parent_id = "LT_PT_edit_preset_main_panel"
     bl_order = 0
-    bl_options = {'DEFAULT_CLOSED'}
-    
+    bl_options = {'DEFAULT_OPEN'}
+
     @classmethod
     def poll(cls, context):
-        return bool(context.active_object.name == 'Local_Mannequin' and context.active_action)
-    
+        return bool(context.active_action)
 
     #TODO: hyphonate this shit
     def draw(self, context):
-        action = context.active_action
         layout = self.layout
         box = layout.box()
         self.draw_preset_info(self, context, box, is_dopeheet=True)
 
+    # def draw_preset_info(cls, self, context, layout, is_dopeheet:bool):
 
-
-class LT_PT_edit_preset_edit_panel(LT_action_master_panel, preset_info, bpy.types.Panel):
+class LT_PT_edit_preset_edit_panel(LT_action_master_panel, preset_info_ui, bpy.types.Panel):
     
     bl_label = "Edit Pre-Set Info"
     bl_idname = "LT_PT_edit_preset_edit_panel"
     bl_parent_id = "LT_PT_edit_preset_main_panel"
     bl_order = 1
     bl_options = {'DEFAULT_CLOSED'}
-    
+
     @classmethod
     def poll(cls, context):
-        return bool(context.active_object.name == 'Local_Mannequin')
+        return bool(context.active_action)
     
     def draw(self, context):
         action = context.active_action
@@ -456,7 +459,6 @@ classes = (
     LT_OT_set_preset_info,
     LT_PT_edit_preset_info_panel,
     LT_PT_debug_panel,
-    
 
     )
 
