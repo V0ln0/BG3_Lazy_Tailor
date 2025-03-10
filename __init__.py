@@ -110,7 +110,7 @@ class LT_PT_lazy_panel_main(LT_scene_master_panel, bpy.types.Panel):
 
 
 
-class LT_PT_lazy_advanced_panel(LT_scene_master_panel, preset_info_ui, bpy.types.Panel):
+class LT_PT_lazy_advanced_panel(LT_scene_master_panel, bpy.types.Panel):
     
     bl_label = "Mannequin Options: Custom"
     bl_idname = "LT_PT_lazy_advanced_panel"
@@ -125,7 +125,7 @@ class LT_PT_lazy_advanced_panel(LT_scene_master_panel, preset_info_ui, bpy.types
     def draw(self, context):
         
 
-        action_lock = self.is_lt_action()
+        action_lock = bool(bpy.context.scene.lt_actions is not None)
         layout = self.layout
         layout.prop(context.scene, "lt_actions", text="Pre-Set")
         layout.separator(type='LINE')
@@ -308,13 +308,12 @@ class LT_PT_edit_preset_main_panel(LT_action_master_panel, bpy.types.Panel):
 
 
 
-class LT_PT_edit_preset_info_panel(LT_action_master_panel, preset_info_ui, bpy.types.Panel):
+class LT_PT_edit_preset_info_panel(LT_action_master_panel, preset_ui, bpy.types.Panel):
     
     bl_label = "Pre-Set Info"
     bl_idname = "LT_PT_edit_preset_info_panel"
     bl_parent_id = "LT_PT_edit_preset_main_panel"
     bl_order = 0
-
 
     @classmethod
     def poll(cls, context):
@@ -322,13 +321,46 @@ class LT_PT_edit_preset_info_panel(LT_action_master_panel, preset_info_ui, bpy.t
 
     #TODO: hyphonate this shit
     def draw(self, context):
+        action = context.active_action
+        lt_user_props = bpy.context.scene.lt_user_props
+        hands_off = self.is_not_defualt(action)
         layout = self.layout
         box = layout.box()
-        self.draw_preset_info(self, context, box, is_dopeheet=True)
+        self.draw_preset_info(self, context, box, is_dopesheet=True)
 
-    # def draw_preset_info(cls, self, context, layout, is_dopeheet:bool):
 
-class LT_PT_edit_preset_edit_panel(LT_action_master_panel, preset_info_ui, bpy.types.Panel):
+        if hands_off == False:
+            row = layout.row()
+            row.alignment = 'CENTER'
+            row.label(text="Warning: Defualt Pre-Sets can not be edited.")
+            layout.separator(type='LINE')
+
+        lock_col = layout.column()
+        lock_col.enabled = hands_off
+        lock_col.label(text="Edit Pre-Set Info:")
+        box = lock_col.box()
+
+        col = box.column()
+        col.prop(lt_user_props, "type_action")
+        col.prop(lt_user_props, "from_body_action")
+        col.prop(lt_user_props, "to_body_action")
+        col.prop(lt_user_props, "creator")
+        col.prop(lt_user_props, "desc")
+        row = box.row()
+        row.alignment = 'RIGHT'
+        row.operator("lt.set_preset_info", text="Set Info")
+
+
+        check_save =  lock_col.operator("lt.confirm_choice", text="Save to File")
+        check_save.the_thing = "save ALL user pre-sets in this file"
+        check_save.warn_extra = True
+        check_save.warn_message = "Warning: This will overwrite all pre-sets with the same name."
+        check_save.op_name = "lt.save_user_preset"
+
+        layout.separator(type='LINE')
+
+
+class LT_PT_edit_preset_edit_panel(LT_action_master_panel, preset_ui, bpy.types.Panel):
     
     bl_label = "Edit Pre-Set Info"
     bl_idname = "LT_PT_edit_preset_edit_panel"
@@ -462,6 +494,7 @@ def lt_base_action_poll(self, action):
 
     if action.get('LT_Default') is None:
         return action
+
 
 
 def register():

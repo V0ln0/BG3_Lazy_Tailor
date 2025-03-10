@@ -1,7 +1,7 @@
 import bpy
 import enum
 from enum import Enum
-from functools import partial
+
 
 '''
 HOW THIS WORKS: MANNEQUINS ARE LIKE ONIONS
@@ -167,8 +167,6 @@ class LT_OT_constraints(bpy.types.Operator):
         else:
             BodyShop(LMB='LT_Mannequin_Base', LM='LT_Mannequin').BoneVis_Validator(stretch_To=self.stretch_to_bool)
         return {"FINISHED"}
-
-
 
 
 def check_linked():
@@ -403,65 +401,36 @@ class LT_OT_set_preset_info(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class preset_ui:
+    
+    @staticmethod
+    def is_not_defualt(action):
+        return bool(action.get('LT_Default') is None)
 
-
-#this is hacky as fuck but I just don't care anymore
-#this entire class is for appeasing the ui spirits
-
-#update: what the fuck is this piece of shit 
-#TODO: rewrite all this crap, its causing to many propblems
-class preset_info:
-
-    #fucking bpy.context restricted accsess ass
     @classmethod
-    def is_lt_action(self):
+    def draw_preset_info(cls, self, context, layout, is_dopesheet: bool):
 
-        return bool(bpy.context.scene.lt_actions is not None)
-    
-    @classmethod
-    def read_prop(self, propname: str, lt_action):
-        #check if the prop exists and retruns a placehodler if it dosen't 
-        try: 
-            return lt_action[propname]
-        except KeyError:
-            return "N/A"
-   
-    @classmethod    
-    def get_short_name(self, name:str):
-        
-        return (name.replace('LT_','')).replace('_BASE','')
-    
-    @classmethod 
-    def is_not_defualt(self, lt_action):
-        #check to stop people messing with the defualt presets
-        return bool(lt_action.get('LT_Default') is None)
-    
-class preset_info_ui(preset_info):
-    
-    @classmethod
-    def draw_preset_info(cls, self, context, layout, is_dopeheet:bool):
-       
-        if is_dopeheet == True:
-            UI_action = bpy.data.objects["Local_Mannequin"].animation_data.action
+        if is_dopesheet:
+            preset = bpy.data.objects["Local_Mannequin"].animation_data.action
         else:
-            UI_action = bpy.context.scene.lt_actions
+            preset = bpy.context.scene.lt_actions
+    
+        for index, key, in enumerate(preset.items()):
+            if key[0].startswith('LT_'):
+                #removes 'LT_' from prop name and combines its value into a string
+                #absolutely awful I know
+                if key[0] in ('LT_From_Body', 'LT_To_Body'):
 
+                    #turns "LT_To_Body', 'LT_HUM_MS_BASE'" into " To_Body: HUM_MS"
+                    layout.label(text=f"{key[0].replace('LT_','')}: {(key[1].replace('LT_','')).replace('_BASE','')}")
+                else:
+                    #turns "LT_Creator', 'Volno'" into "Creator: Volno"
+                    layout.label(text=f"{key[0].replace('LT_','')}: {key[1]}")
 
-        lt_type = self.read_prop(propname='LT_Type', lt_action=UI_action)
-
-        layout.label(text="Name: " + UI_action.name)
-        layout.label(text="Type: " + lt_type)
-        if lt_type == "FULL":
-            layout.label(text="Converts From: " + self.get_short_name(self.read_prop(propname='LT_From_Body', lt_action=UI_action)))
-            layout.label(text="Converts To: " + self.get_short_name(self.read_prop(propname='LT_To_Body', lt_action=UI_action)))
-        layout.label(text="Creator: " + self.read_prop(propname='LT_Creator', lt_action=UI_action))
-        layout.label(text="Description: " + self.read_prop(propname='LT_Description', lt_action=UI_action))
-
-
-class LT_MT_about_preset_scene_menu(preset_info_ui, bpy.types.Menu):
+class LT_MT_about_preset_scene_menu(preset_ui, bpy.types.Menu):
     
     bl_idname = "LT_MT_about_preset_scene_menu"
     bl_label = "About Pre-Set"
     
     def draw(self, context):
-        self.draw_preset_info(self, context, self.layout, is_dopeheet=False)
+        self.draw_preset_info(self, context, self.layout, is_dopesheet=False)
