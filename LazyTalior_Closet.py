@@ -106,15 +106,20 @@ class LT_OT_initialise(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class LT_OT_obj_dropper(bpy.types.Operator):
+class LT_OT_asset_dropper(bpy.types.Operator):
     
-    bl_idname = "lt.obj_dropper"
-    bl_label = "Get Object"
-    bl_description = "Drops a specifc object into the scene."
+    bl_idname = "lt.asset_dropper"
+    bl_label = "Get Asset"
+    bl_description = "Drops a specifc asset into the scene."
 
-    obj_name: bpy.props.StringProperty(
-        name="obj name",
+    asset_name: bpy.props.StringProperty(
+        name="asset name",
         default=""
+    )
+
+    asset_type: bpy.props.StringProperty(
+        name="asset_type",
+        default="Object"
     )
 
     def execute(self, context):
@@ -126,9 +131,9 @@ class LT_OT_obj_dropper(bpy.types.Operator):
             pass
         bpy.ops.wm.append(
             
-            filepath=os.path.join(LibPath, "Object", self.obj_name),
-            directory=os.path.join(LibPath, "Object"),
-            filename=self.obj_name,
+            filepath=os.path.join(LibPath, self.asset_type, self.asset_name),
+            directory=os.path.join(LibPath, self.asset_type),
+            filename=self.asset_name,
             set_fake=True,
             clear_asset_data=True
             )         

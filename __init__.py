@@ -29,23 +29,9 @@ from . LazyTalior_Mesh import *
 
 
 
-bl_info = {
-    "name": "BG3 Lazy Tailor",
-    "description": "A tool aimed at making the proccsess of refiting outfits for various races/bodytypes for use in Baldur's Gate 3 easier.",
-    "author": "Volno",
-    "version": (1, 0, 0),
-    "blender": (4, 2, 0),
-    "location": "Scene > Properties > BG3LazyTailor Tools tab",
-    "warning": "baby's first Blender addon",
-    "wiki_url": "",
-    "tracker_url": "",
-    "support": "COMMUNITY",
-    "category": "Meshes"
-    }
-
 class LT_PT_tailor_AddonPreferences(bpy.types.AddonPreferences):
     
-    bl_idname = __name__
+    bl_idname = __package__
 
     user_lib_path: bpy.props.StringProperty(
         name="User Library Path",
@@ -129,7 +115,7 @@ class LT_PT_lazy_advanced_panel(LT_scene_master_panel, preset_info_ui, bpy.types
     bl_label = "Mannequin Options: Custom"
     bl_idname = "LT_PT_lazy_advanced_panel"
     bl_parent_id = "LT_PT_lazy_panel_main"
-    bl_order = 0
+    bl_order = 1
     bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
@@ -161,7 +147,7 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
     bl_label = "Utility"
     bl_idname = "LT_PT_utility_panel"
     bl_parent_id = "LT_PT_lazy_panel_main"
-    bl_order = 1
+    bl_order = 0
     bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
@@ -187,18 +173,26 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         row.operator("wm.call_menu", text="Set LODs").name = "LT_MT_set_lod_menu"
         layout.separator(type='LINE')
         
-        layout.label(text="Helper Assets:")
-        box = layout.box()
-        col = box.column()
+
+        col = layout.column()
+        col.label(text="BG3 Materials:")
         
-        col.label(text="Export Ready Armature:")
+        armour = col.operator("lt.asset_dropper", text="Append Armour Shader")
+        armour.asset_name = "LT_Armour"
+        armour.asset_type = "Material"
+        base = col.operator("lt.asset_dropper", text="Append Base Shader")
+        base.asset_name = "LT_Base"
+        base.asset_type = "Material"
+        
+        col.separator(type='LINE')
+        col.label(text="GR2 Armature:")
         split = col.split(factor=0.65)
         split_a = split.column()
         split_a.prop(lt_util_props,"gilf_bones", text="") 
         
         split_b = split.column()
-        split_b.operator("lt.obj_dropper", text="Append").obj_name= lt_util_props.gilf_bones
-        col = box.column()
+        split_b.operator("lt.asset_dropper", text="Append").asset_name= lt_util_props.gilf_bones
+        col = layout.column()
         
         col.label(text="Body Reference:")
         split = col.split(factor=0.65)
@@ -206,8 +200,8 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         split_a.prop(lt_util_props,"ref_bodies", text="")
         
         split_b = split.column()
-        split_b.operator("lt.obj_dropper", text="Append").obj_name= lt_util_props.ref_bodies
-        box.separator(factor=0.1)
+        split_b.operator("lt.asset_dropper", text="Append").asset_name= lt_util_props.ref_bodies
+        layout.separator(factor=0.1)
 
         layout.label(text="Danger Zone:")
         check_start =  layout.operator("lt.confirm_choice", text="Restart Lazy Tailor")
@@ -226,7 +220,7 @@ class LT_PT_debug_panel(LT_scene_master_panel, bpy.types.Panel):
    
     @classmethod
     def poll(cls, context):
-        return bool(bpy.context.preferences.addons[__name__].preferences.volno_debug)
+        return bool(bpy.context.preferences.addons[__package__].preferences.volno_debug)
     
     def draw(self, context):    
         layout = self.layout
@@ -320,7 +314,7 @@ class LT_PT_edit_preset_info_panel(LT_action_master_panel, preset_info_ui, bpy.t
     bl_idname = "LT_PT_edit_preset_info_panel"
     bl_parent_id = "LT_PT_edit_preset_main_panel"
     bl_order = 0
-    bl_options = {'DEFAULT_OPEN'}
+
 
     @classmethod
     def poll(cls, context):
@@ -452,7 +446,7 @@ classes = (
     LT_OT_save_user_presets,
     LT_OT_constraints,
     LT_OT_confirm_choice,
-    LT_OT_obj_dropper,
+    LT_OT_asset_dropper,
     LT_OT_exterminatus,
     LT_PT_edit_preset_main_panel,
     LT_PT_edit_preset_edit_panel,
