@@ -28,16 +28,6 @@ def ensure_collection_child(Cname:str, Pcol) -> bpy.types.Collection:
         link_to = bpy.data.collections[Cname]
     return link_to
 
-#Bone collections didn't exist pior to around 4.2.0
-#Can't get people to install the right version no matter how many times I tell em to
-#so now it won't start unless you version of blender is correct
-def VersionError_Popup(): 
-
-    def draw(self, context):
-       self.layout.label(text="Lazy Tailor requires Blender 4.2.0 or above, please download the latest version from Blender.org.")
-       self.layout.label(text="Remember: you can have more than one copy of Blender instaled!")
-        
-    bpy.context.window_manager.popup_menu(draw, title = "Warning: Incompatible Version of Blender detected", icon = 'ERROR')
 
 
 '''
@@ -56,52 +46,47 @@ class LT_OT_initialise(bpy.types.Operator):
     bl_description = "Imports assets needed by the addon into your current Blend file. You only need to run this once."
 
     def execute(self, context):
+
+        try:
+            bpy.ops.object.mode_set(mode="OBJECT")
+        except RuntimeError:
+            pass
         
-        VersionCheck = bool(bpy.app.version > (4, 2, 0))
+        LibPath = bpy.context.scene.lt_util_props.LibPath
+        EnsuredCol = ensure_collection("Lazy Tailor Assets") #will also make the collection active
+        
+        isbones = "LT_DontTouchIsBones"
+        bpy.ops.wm.link(
+            
+            filepath=os.path.join(LibPath, "Collection", isbones),
+            directory=os.path.join(LibPath, "Collection"),
+            filename=isbones,
+            do_reuse_local_id=True,
+            instance_collections=True
+            
+            ) 
 
-        if VersionCheck == False:
-            VersionError_Popup()
-        else:
-            try:
-                bpy.ops.object.mode_set(mode="OBJECT")
-            except RuntimeError:
-                pass
-            
-            LibPath = bpy.context.scene.lt_util_props.LibPath
-            EnsuredCol = ensure_collection("Lazy Tailor Assets") #will also make the collection active
-            
-            isbones = "LT_DontTouchIsBones"
-            bpy.ops.wm.link(
-                
-                filepath=os.path.join(LibPath, "Collection", isbones),
-                directory=os.path.join(LibPath, "Collection"),
-                filename=isbones,
-                do_reuse_local_id=True,
-                instance_collections=True
-                
-                ) 
+        bpy.data.objects[isbones].hide_viewport = True
+        MannequinCol = ensure_collection_child("Mannequins", EnsuredCol)
+        Mannequins = [Mannequin for Mannequin in bpy.data.objects if Mannequin.name.startswith("LT_Mannequin")]
+        
+        for linked_M in Mannequins:
+            MannequinCol.objects.link(linked_M)
+            linked_M.make_local()
+            linked_M.data.make_local()
 
-            bpy.data.objects[isbones].hide_viewport = True
-            MannequinCol = ensure_collection_child("Mannequins", EnsuredCol)
-            Mannequins = [Mannequin for Mannequin in bpy.data.objects if Mannequin.name.startswith("LT_Mannequin")]
-            
-            for linked_M in Mannequins:
-                MannequinCol.objects.link(linked_M)
-                linked_M.make_local()
-                linked_M.data.make_local()
-
-            bpy.ops.object.select_all(action='DESELECT')
-            for M in MannequinCol.objects:
-                M.data.use_fake_user = True
-                M.data.name = "Local_" + (M.name.replace('LT_','')) 
-                M.name = M.data.name
-                '''
-                renaming both obj and data because Blender HAS and WILL get confused if there is linked data with the same name as local data in the file
-                probbably dosen't help that these two idecialy names objects are in the same scene
-                due to LT_DontTouchIsBones being an instanced collection
-                '''
-            
-            bpy.context.scene.lt_util_props.InitBool = True
+        bpy.ops.object.select_all(action='DESELECT')
+        for M in MannequinCol.objects:
+            M.data.use_fake_user = True
+            M.data.name = "Local_" + (M.name.replace('LT_','')) 
+            M.name = M.data.name
+            '''
+            renaming both obj and data because Blender HAS and WILL get confused if there is linked data with the same name as local data in the file
+            probbably dosen't help that these two idecialy names objects are in the same scene
+            due to LT_DontTouchIsBones being an instanced collection
+            '''
+        
+        bpy.context.scene.lt_util_props.InitBool = True
         
         return {"FINISHED"}
 

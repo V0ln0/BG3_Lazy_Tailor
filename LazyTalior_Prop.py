@@ -123,18 +123,16 @@ class lt_util_props(bpy.types.PropertyGroup):
 class lt_user_props(bpy.types.PropertyGroup):
 
 
-    from_body_action: bpy.props.EnumProperty(
+    from_body_action: bpy.props.StringProperty(
         name="From",
         description="Name of body that you are converting FROM",
-        items=base_bones,
-        default=(1)
+        default=('LT_HUM_F_BASE')
     )
 
-    to_body_action: bpy.props.EnumProperty(
+    to_body_action: bpy.props.StringProperty(
         name="To",
         description="Name of body that you are converting TO",
-        items=base_bones,
-        default=(1)
+        default=('LT_HUM_F_BASE')
     )
     
     type_action: bpy.props.EnumProperty(
@@ -157,32 +155,3 @@ class lt_user_props(bpy.types.PropertyGroup):
         maxlen=128,
         )
 
-
-
-
-# class egg:
-    
-#     @classmethod
-#     def draw_dating_egg(self, layout):
-#         import random
-        
-#         egg_check = random.randint(1, 20)
-#         dating_easter_egg = (
-            
-#             "Long walks on the beach",
-#             "The smell of burnt toast",
-#             "The thrill of the kill",
-#             "Taylor Swift",
-#             "The colour purple",
-#             "Licking lamp posts in winter",
-#             "Being toxic on reddit",
-#             "Sending Volno $5",
-#             "Going on advantures",
-#             "Knitting",
-#             "Pirating Adobe products",
-#             "You",
-#             "Being in the cuck vent"
-#         )
-        
-#         if egg_check == 20:
-#             layout.label(text="Likes: " + dating_easter_egg[random.randint(0, 12)])

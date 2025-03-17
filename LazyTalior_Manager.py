@@ -131,6 +131,31 @@ class active_check:
         
         bpy.ops.object.select_pattern(pattern=ObjName, extend=False)
 
+def Error_Popup(pop_title: str, error_reason: str, suggestion: str):
+
+    def draw(self, context):
+       
+        self.layout.label(text=error_reason)
+        self.layout.label(text=suggestion)
+        
+    bpy.context.window_manager.popup_menu(draw, title = pop_title, icon = 'ERROR')
+
+def check_linked(is_warning:bool):
+    is_action = bool(bpy.data.objects["Local_Mannequin"].animation_data.action)
+    is_valid = True
+    if is_action == True:
+        #blender gets pissy when trying to unlink an action from the scene menu.
+        #TODO: try to find a less scuffed way of unlinking actions from the scene menu that dosen't involve telling the user to do it
+        if is_warning == True: 
+            Error_Popup(
+                pop_title="Action Data Detected!",
+                error_reason="An action data block has been found on Local_Mannequin, unable to apply pre-set.",
+                suggestion="Please unlink the action and try again."
+                )
+            is_valid = False
+        else:
+            bpy.ops.action.unlink()
+    return is_valid
 
 class LT_OT_mannequin_reset(bpy.types.Operator):
 
@@ -140,10 +165,13 @@ class LT_OT_mannequin_reset(bpy.types.Operator):
 
 
     def execute(self, context):
-
-        active_check.force_active()
-        bpy.ops.object.mode_set(mode="POSE")
-        BodyShop().set_base(full_reset=True)
+        is_valid = check_linked(is_warning=True)
+        if is_valid == True:
+            active_check.force_active()
+            bpy.ops.object.mode_set(mode="POSE")
+            BodyShop().set_base(full_reset=True)
+            bpy.context.scene.lt_user_props.to_body_action = 'LT_HUM_F_BASE'
+            bpy.context.scene.lt_user_props.from_body_action = 'LT_HUM_F_BASE'
         return {"FINISHED"}
 
 class LT_OT_constraints(bpy.types.Operator):
@@ -168,11 +196,6 @@ class LT_OT_constraints(bpy.types.Operator):
             BodyShop(LMB='LT_Mannequin_Base', LM='LT_Mannequin').BoneVis_Validator(stretch_To=self.stretch_to_bool)
         return {"FINISHED"}
 
-
-def check_linked():
-    is_action = bool(bpy.data.objects["Local_Mannequin"].animation_data.action)
-    if is_action == True:
-        bpy.ops.action.unlink()
 
 base_bones= (
     
@@ -200,13 +223,12 @@ class LT_OT_set_from_tailor(bpy.types.Operator):
     )
 
     def execute(self, context):
-
+        check_linked(is_warning=False)
         active_check.force_active()
         bpy.ops.object.mode_set(mode="POSE")
-        check_linked()
         # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
         BodyShop(from_Arm=self.from_bones).set_base()
-
+        bpy.context.scene.lt_user_props.from_body_action = self.from_bones
         return {"FINISHED"}
     
 class LT_OT_set_to_tailor(bpy.types.Operator):
@@ -222,13 +244,12 @@ class LT_OT_set_to_tailor(bpy.types.Operator):
     )
 
     def execute(self, context):
-
+        
+        check_linked(is_warning=False)
         active_check.force_active()
         bpy.ops.object.mode_set(mode="POSE")
-        check_linked()
-        # probbably a dumb idea to call it "SewingPattern" but I couldn't think of a better name for it
         BodyShop(to_Arm=self.to_bones).change_base()
-
+        bpy.context.scene.lt_user_props.to_body_action = self.to_bones
         return {"FINISHED"}
 
 
@@ -266,31 +287,28 @@ class LT_OT_defualt_preset_tailor(bpy.types.Operator):
             ('HRT', bpy.data.actions['LT_HUM_M_MTF']), 
             ])
         
-        active_check.force_active()
-        bpy.ops.object.mode_set(mode="POSE")
-
-        if lt_util_props.from_body == "HUM_F":
-            action = F_PreSets[lt_util_props.to_body].value
-        else:
-            action = M_PreSets[lt_util_props.to_body].value
-        
-        SewingPattern = BodyShop(
-            from_Arm=action['LT_From_Body'], 
-            to_Arm=action['LT_To_Body']
-            )
-        
-        SewingPattern.BodySwap(PreSet=action)
-        
+        is_valid = check_linked(is_warning=True)
+        if is_valid == True:
+            
+            active_check.force_active()
+            bpy.ops.object.mode_set(mode="POSE")
+            if lt_util_props.from_body == "HUM_F":
+                action = F_PreSets[lt_util_props.to_body].value
+            else:
+                action = M_PreSets[lt_util_props.to_body].value
+            
+            SewingPattern = BodyShop(
+                from_Arm=action['LT_From_Body'], 
+                to_Arm=action['LT_To_Body']
+                )
+            
+            SewingPattern.BodySwap(PreSet=action)
+            bpy.context.scene.lt_user_props.to_body_action = action['LT_To_Body']
+            bpy.context.scene.lt_user_props.from_body_action = action['LT_From_Body']        
+            
         return {"FINISHED"}
 
-def Error_Popup(pop_title: str, error_reason: str, suggestion: str):
 
-    def draw(self, context):
-       
-        self.layout.label(text=error_reason)
-        self.layout.label(text=suggestion)
-        
-    bpy.context.window_manager.popup_menu(draw, title = pop_title, icon = 'ERROR')
 
 
 #TODO: this has not been tested fully
@@ -303,17 +321,19 @@ class LT_OT_apply_user_preset(bpy.types.Operator):
 
     def execute(self, context):
         
-        User_Action = bpy.context.scene.lt_actions
-        active_check.force_active()
-        bpy.ops.object.mode_set(mode="POSE")
-
-        if User_Action["LT_Type"] == 'FULL':
-
-            BodyShop(from_Arm=User_Action['LT_From_Body'], to_Arm=User_Action['LT_To_Body']).BodySwap(PreSet=User_Action)
-
-        if  User_Action["LT_Type"] == 'ADDITIVE':
+        is_valid = check_linked(is_warning=True)
+        if is_valid == True:        
             
-            BodyShop().ApplyPreSet(PreSet=User_Action, Is_Addative=True)
+            User_Action = bpy.context.scene.lt_actions
+            active_check.force_active()
+            bpy.ops.object.mode_set(mode="POSE")
+            if User_Action["LT_Type"] == 'FULL':
+
+                BodyShop(from_Arm=User_Action['LT_From_Body'], to_Arm=User_Action['LT_To_Body']).BodySwap(PreSet=User_Action)
+
+            if  User_Action["LT_Type"] == 'ADDITIVE':
+                
+                BodyShop().ApplyPreSet(PreSet=User_Action, Is_Addative=True)
 
         return {"FINISHED"}
      
@@ -401,36 +421,4 @@ class LT_OT_set_preset_info(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class preset_ui:
-    
-    @staticmethod
-    def is_not_defualt(action):
-        return bool(action.get('LT_Default') is None)
 
-    @classmethod
-    def draw_preset_info(cls, self, context, layout, is_dopesheet: bool):
-
-        if is_dopesheet:
-            preset = bpy.data.objects["Local_Mannequin"].animation_data.action
-        else:
-            preset = bpy.context.scene.lt_actions
-    
-        for index, key, in enumerate(preset.items()):
-            if key[0].startswith('LT_'):
-                #removes 'LT_' from prop name and combines its value into a string
-                #absolutely awful I know
-                if key[0] in ('LT_From_Body', 'LT_To_Body'):
-
-                    #turns "LT_To_Body', 'LT_HUM_MS_BASE'" into " To_Body: HUM_MS"
-                    layout.label(text=f"{key[0].replace('LT_','')}: {(key[1].replace('LT_','')).replace('_BASE','')}")
-                else:
-                    #turns "LT_Creator', 'Volno'" into "Creator: Volno"
-                    layout.label(text=f"{key[0].replace('LT_','')}: {key[1]}")
-
-class LT_MT_about_preset_scene_menu(preset_ui, bpy.types.Menu):
-    
-    bl_idname = "LT_MT_about_preset_scene_menu"
-    bl_label = "About Pre-Set"
-    
-    def draw(self, context):
-        self.draw_preset_info(self, context, self.layout, is_dopesheet=False)

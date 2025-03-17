@@ -26,6 +26,7 @@ from . LazyTalior_Manager import *
 from . LazyTalior_Closet import *
 from . LazyTalior_Prop import *
 from . LazyTalior_Mesh import *
+from . LazyTalior_ui_util import *
 
 
 
@@ -54,7 +55,7 @@ class LT_PT_tailor_AddonPreferences(bpy.types.AddonPreferences):
         layout.prop(self, "volno_debug")
 
 
-class LT_scene_master_panel:
+class LT_scene_master_panel():
     
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -115,7 +116,7 @@ class LT_PT_lazy_advanced_panel(LT_scene_master_panel, bpy.types.Panel):
     bl_label = "Mannequin Options: Custom"
     bl_idname = "LT_PT_lazy_advanced_panel"
     bl_parent_id = "LT_PT_lazy_panel_main"
-    bl_order = 1
+    bl_order = 0
     bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
@@ -147,7 +148,7 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
     bl_label = "Utility"
     bl_idname = "LT_PT_utility_panel"
     bl_parent_id = "LT_PT_lazy_panel_main"
-    bl_order = 0
+    bl_order = 1
     bl_options = {'DEFAULT_CLOSED'}
     
     @classmethod
@@ -155,36 +156,24 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         return bool(context.scene.lt_util_props.InitBool)
     
     def draw(self, context):
-        
-
         lt_util_props = bpy.context.scene.lt_util_props
         
         layout = self.layout
+
         col = layout.column()
         col.label(text="Mesh Options:")
-        
-        col.operator("wm.call_menu", text="Set Export Order").name = "LT_MT_export_order_menu"
-        col.operator("lt.so_no_head", text="Create Head_M")
-        layout.separator(type='LINE')
-        layout.label(text="LOD factory:")
+        mesh_split = col.split(factor=0.5)
+        split_a = mesh_split.column()
 
-        row = layout.row()
-        row.operator("wm.call_menu", text="Create LODs").name = "LT_MT_create_lod_menu"
-        row.operator("wm.call_menu", text="Set LODs").name = "LT_MT_set_lod_menu"
+        split_a.operator("wm.call_menu", text="Set Export Order").name = "LT_MT_export_order_menu"
+        split_a.operator("lt.so_no_head", text="Create Head_M")
+        split_b = mesh_split.column()
+
+        split_b.operator("wm.call_menu", text="Create LODs").name = "LT_MT_create_lod_menu"
+        split_b.operator("wm.call_menu", text="Set LODs").name = "LT_MT_set_lod_menu"
         layout.separator(type='LINE')
         
-
         col = layout.column()
-        col.label(text="BG3 Materials:")
-        
-        armour = col.operator("lt.asset_dropper", text="Append Armour Shader")
-        armour.asset_name = "LT_Armour"
-        armour.asset_type = "Material"
-        base = col.operator("lt.asset_dropper", text="Append Base Shader")
-        base.asset_name = "LT_Base"
-        base.asset_type = "Material"
-        
-        col.separator(type='LINE')
         col.label(text="GR2 Armature:")
         split = col.split(factor=0.65)
         split_a = split.column()
@@ -192,6 +181,7 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         
         split_b = split.column()
         split_b.operator("lt.asset_dropper", text="Append").asset_name= lt_util_props.gilf_bones
+        
         col = layout.column()
         
         col.label(text="Body Reference:")
@@ -201,8 +191,8 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         
         split_b = split.column()
         split_b.operator("lt.asset_dropper", text="Append").asset_name= lt_util_props.ref_bodies
-        layout.separator(factor=0.1)
 
+        layout.separator(type='LINE')
         layout.label(text="Danger Zone:")
         check_start =  layout.operator("lt.confirm_choice", text="Restart Lazy Tailor")
         check_start.the_thing = "restart Lazy Tailor"
@@ -229,19 +219,6 @@ class LT_PT_debug_panel(LT_scene_master_panel, bpy.types.Panel):
         props = layout.operator("lt.constraints", text="Stretch To")
         props.is_debug = True
         props.stretch_to_bool = True
-
-        layout.separator(type='LINE')
-        row = layout.row()
-        row.alignment = 'CENTER'
-        row.label(text="TRANS RIGHTS ARE HUMAN RIGHTS")
-        row = layout.row()
-        row.alignment = 'CENTER'
-        row.label(icon='SEQUENCE_COLOR_05')
-        row.label(icon='SEQUENCE_COLOR_07')
-        row.label(icon='SNAP_FACE')
-        row.label(icon='SEQUENCE_COLOR_07')
-        row.label(icon='SEQUENCE_COLOR_05')
-
 
 class LT_PT_mannequin_vis(bpy.types.Panel):
 
@@ -271,7 +248,7 @@ class LT_PT_mannequin_vis(bpy.types.Panel):
         grid.prop(mannequin_data.collections["CTRL_Legs"], "is_visible", text="Legs Main", toggle=True)
 
 
-class LT_action_master_panel:
+class LT_action_master_panel(preset):
     
     bl_space_type = 'DOPESHEET_EDITOR'
     bl_region_type = 'UI'
@@ -306,28 +283,26 @@ class LT_PT_edit_preset_main_panel(LT_action_master_panel, bpy.types.Panel):
         layout.separator(type='LINE')
 
 
-
-
-class LT_PT_edit_preset_info_panel(LT_action_master_panel, preset_ui, bpy.types.Panel):
+class LT_PT_edit_preset_info_panel(LT_action_master_panel, bpy.types.Panel):
     
     bl_label = "Pre-Set Info"
     bl_idname = "LT_PT_edit_preset_info_panel"
     bl_parent_id = "LT_PT_edit_preset_main_panel"
     bl_order = 0
-
+    bl_options = {'HIDE_HEADER'}
     @classmethod
     def poll(cls, context):
         return bool(context.active_action)
 
-    #TODO: hyphonate this shit
+
     def draw(self, context):
         action = context.active_action
         lt_user_props = bpy.context.scene.lt_user_props
         hands_off = self.is_not_defualt(action)
         layout = self.layout
-        box = layout.box()
-        self.draw_preset_info(self, context, box, is_dopesheet=True)
-
+        # box = layout.box()
+        # self.draw_preset_info(self, context, box, is_dopesheet=True)
+        
 
         if hands_off == False:
             row = layout.row()
@@ -340,10 +315,13 @@ class LT_PT_edit_preset_info_panel(LT_action_master_panel, preset_ui, bpy.types.
         lock_col.label(text="Edit Pre-Set Info:")
         box = lock_col.box()
 
-        col = box.column()
+        col = box.column(align=True)
         col.prop(lt_user_props, "type_action")
-        col.prop(lt_user_props, "from_body_action")
-        col.prop(lt_user_props, "to_body_action")
+        if lt_user_props.type_action == "FULL":
+
+            row = col.row()
+            row.label(text=f'From: {self.get_short_name(lt_user_props.from_body_action, is_base=True)}')
+            row.label(text=f'To: {self.get_short_name(lt_user_props.to_body_action, is_base=True)}')
         col.prop(lt_user_props, "creator")
         col.prop(lt_user_props, "desc")
         row = box.row()
@@ -358,97 +336,6 @@ class LT_PT_edit_preset_info_panel(LT_action_master_panel, preset_ui, bpy.types.
         check_save.op_name = "lt.save_user_preset"
 
         layout.separator(type='LINE')
-
-
-class LT_PT_edit_preset_edit_panel(LT_action_master_panel, preset_ui, bpy.types.Panel):
-    
-    bl_label = "Edit Pre-Set Info"
-    bl_idname = "LT_PT_edit_preset_edit_panel"
-    bl_parent_id = "LT_PT_edit_preset_main_panel"
-    bl_order = 1
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        return bool(context.active_action)
-    
-    def draw(self, context):
-        action = context.active_action
-        lt_user_props = bpy.context.scene.lt_user_props
-        hands_off = self.is_not_defualt(action)
-        
-        
-        layout = self.layout
-        if hands_off == False:
-            row = layout.row()
-            row.alignment = 'CENTER'
-            row.label(text="Warning: Defualt Pre-Sets can not be edited.")
-            layout.separator(type='LINE')
-
-        lock_col = layout.column()
-        lock_col.enabled = hands_off
-        lock_col.label(text="Edit Pre-Set Info:")
-        box = lock_col.box()
-
-        col = box.column()
-        col.prop(lt_user_props, "type_action")
-        col.prop(lt_user_props, "from_body_action")
-        col.prop(lt_user_props, "to_body_action")
-        col.prop(lt_user_props, "creator")
-        col.prop(lt_user_props, "desc")
-        row = box.row()
-        row.alignment = 'RIGHT'
-        row.operator("lt.set_preset_info", text="Set Info")
-
-
-        check_save =  lock_col.operator("lt.confirm_choice", text="Save to File")
-        check_save.the_thing = "save ALL user pre-sets in this file"
-        check_save.warn_extra = True
-        check_save.warn_message = "Warning: This will overwrite all pre-sets with the same name."
-        check_save.op_name = "lt.save_user_preset"
-
-        layout.separator(type='LINE')
-
-def confirm_Popup(do_that: str, op_name: str, extra: bool, extra_con: str): 
-
-    def draw(self, context):
-        self.layout.label(text=f"Are you sure that you wish to {do_that}?")
-        if extra == True:
-            self.layout.label(text=extra_con)
-        self.layout.operator(op_name, text= "Yes, do it.")
-            
-    bpy.context.window_manager.popup_menu(draw, title = "Confirm Choice", icon = 'QUESTION')
-
-class LT_OT_confirm_choice(bpy.types.Operator):
-    
-    bl_idname = "lt.confirm_choice"
-    bl_label = "confirm_choice"
-    bl_description = "*John Cena voice* are you sure about that?"
-      
-    the_thing: bpy.props.StringProperty(
-        name="the_thing",
-        default="If you're reading this, I forgot to set it",
-    )
-
-    op_name: bpy.props.StringProperty(
-        name="op_name",
-        default="",
-    )
-
-    warn_extra: bpy.props.BoolProperty(
-        name="warn_extra",
-        default=False
-    )
-
-    warn_message: bpy.props.StringProperty(
-        name="op_name",
-        default="If you're reading this, I forgot to set TWO things",
-    )
-
-    def execute(self, context):
-        confirm_Popup((self.the_thing), (self.op_name), (self.warn_extra), (self.warn_message))
-        return {"FINISHED"}
-
 
 classes = (
 
@@ -481,7 +368,6 @@ classes = (
     LT_OT_asset_dropper,
     LT_OT_exterminatus,
     LT_PT_edit_preset_main_panel,
-    LT_PT_edit_preset_edit_panel,
     LT_OT_set_preset_info,
     LT_PT_edit_preset_info_panel,
     LT_PT_debug_panel,
@@ -503,7 +389,7 @@ def register():
 
         type=bpy.types.Action,
         poll=lt_base_action_poll
-    )
+        )
     for _class in classes: 
         bpy.utils.register_class(_class)
     
