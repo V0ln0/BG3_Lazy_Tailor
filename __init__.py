@@ -18,6 +18,7 @@ Created by Volno
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
+
 # Warning: this is both my first Blender addon and my first "big" project in Python
 # also I am dyslexic, typos abound
 import bpy
@@ -285,7 +286,7 @@ class LT_PT_edit_preset_main_panel(LT_action_master_panel, bpy.types.Panel):
 
 class LT_PT_edit_preset_info_panel(LT_action_master_panel, bpy.types.Panel):
     
-    bl_label = "Pre-Set Info"
+    bl_label = "Pre-set Info"
     bl_idname = "LT_PT_edit_preset_info_panel"
     bl_parent_id = "LT_PT_edit_preset_main_panel"
     bl_order = 0
@@ -300,9 +301,7 @@ class LT_PT_edit_preset_info_panel(LT_action_master_panel, bpy.types.Panel):
         lt_user_props = bpy.context.scene.lt_user_props
         hands_off = self.is_not_defualt(action)
         layout = self.layout
-        # box = layout.box()
-        # self.draw_preset_info(self, context, box, is_dopesheet=True)
-        
+
 
         if hands_off == False:
             row = layout.row()
@@ -312,7 +311,7 @@ class LT_PT_edit_preset_info_panel(LT_action_master_panel, bpy.types.Panel):
 
         lock_col = layout.column()
         lock_col.enabled = hands_off
-        lock_col.label(text="Edit Pre-Set Info:")
+        lock_col.label(text="Edit Pre-set Info:")
         box = lock_col.box()
 
         col = box.column(align=True)
@@ -320,8 +319,9 @@ class LT_PT_edit_preset_info_panel(LT_action_master_panel, bpy.types.Panel):
         if lt_user_props.type_action == "FULL":
 
             row = col.row()
-            row.label(text=f'From: {self.get_short_name(lt_user_props.from_body_action, is_base=True)}')
-            row.label(text=f'To: {self.get_short_name(lt_user_props.to_body_action, is_base=True)}')
+            row.label(text=f'From Body: {self.get_short_name(lt_user_props.from_body_action, is_base=True)}')
+            row.label(text=f'To Body: {self.get_short_name(lt_user_props.to_body_action, is_base=True)}')
+
         col.prop(lt_user_props, "creator")
         col.prop(lt_user_props, "desc")
         row = box.row()
