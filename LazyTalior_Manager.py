@@ -80,12 +80,12 @@ class BodyShop:
 
     def ApplyPreSet(self, PreSet:str, Is_Addative=False): #"Is_Addative" for when applying a preset on top of existing deformations without clearing them
         
-        bpy.ops.pose.select_all(action='DESELECT')
+        bpy.ops.pose.select_all(action='SELECT')
         if Is_Addative == False:
             bpy.ops.pose.user_transforms_clear(only_selected=False)
         self.LM.pose.apply_pose_from_action(PreSet)
 
-    
+
     def set_base(self, full_reset=False):
         
         base = self.from_Arm
@@ -111,7 +111,7 @@ class BodyShop:
         
         self.set_base()                           
         self.change_base()
-        bpy.ops.pose.select_all(action='DESELECT')
+        bpy.ops.pose.select_all(action='SELECT')
         self.LM.pose.apply_pose_from_action(PreSet)
 
 
