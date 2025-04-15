@@ -181,8 +181,10 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         split_a.prop(lt_util_props,"gilf_bones", text="") 
         
         split_b = split.column()
-        split_b.operator("lt.asset_dropper", text="Append").asset_name= lt_util_props.gilf_bones
+        props = split_b.operator("lt.asset_dropper", text="Append")
         
+        props.asset_name= lt_util_props.gilf_bones
+        props.link_append= True
         col = layout.column()
         
         col.label(text="Body Reference:")

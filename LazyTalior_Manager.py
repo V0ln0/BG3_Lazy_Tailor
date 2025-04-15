@@ -219,7 +219,8 @@ class LT_OT_set_from_tailor(bpy.types.Operator):
     from_bones: bpy.props.EnumProperty(
         name="Set From Body",
         items=base_bones,
-        default=(1)
+        default=(1),
+        description="Sets the 'From Body' of Local_Mannequin"
     )
 
     def execute(self, context):
@@ -240,7 +241,8 @@ class LT_OT_set_to_tailor(bpy.types.Operator):
     to_bones: bpy.props.EnumProperty(
         name="Set To Body",
         items=base_bones,
-        default=(1)
+        default=(1),
+        description="Sets the 'To Body' of Local_Mannequin"
     )
 
     def execute(self, context):

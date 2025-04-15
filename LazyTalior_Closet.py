@@ -71,6 +71,7 @@ class LT_OT_initialise(bpy.types.Operator):
         Mannequins = [Mannequin for Mannequin in bpy.data.objects if Mannequin.name.startswith("LT_Mannequin")]
         
         for linked_M in Mannequins:
+
             MannequinCol.objects.link(linked_M)
             linked_M.make_local()
             linked_M.data.make_local()
@@ -85,7 +86,7 @@ class LT_OT_initialise(bpy.types.Operator):
             probbably dosen't help that these two idecialy names objects are in the same scene
             due to LT_DontTouchIsBones being an instanced collection
             '''
-        
+
         bpy.context.scene.lt_util_props.InitBool = True
         
         return {"FINISHED"}
@@ -102,11 +103,10 @@ class LT_OT_asset_dropper(bpy.types.Operator):
         default=""
     )
 
-    asset_type: bpy.props.StringProperty(
-        name="asset_type",
-        default="Object"
-    )
-
+    link_append: bpy.props.BoolProperty(
+        name="link_append",
+        default=False)
+    
     def execute(self, context):
         LibPath = bpy.context.scene.lt_util_props.LibPath
         #this feels like a bad way of handling it
@@ -114,14 +114,29 @@ class LT_OT_asset_dropper(bpy.types.Operator):
             bpy.ops.object.mode_set(mode="OBJECT")
         except RuntimeError:
             pass
-        bpy.ops.wm.append(
+        
+        if self.link_append:
             
-            filepath=os.path.join(LibPath, self.asset_type, self.asset_name),
-            directory=os.path.join(LibPath, self.asset_type),
-            filename=self.asset_name,
-            set_fake=True,
-            clear_asset_data=True
-            )         
+            bpy.ops.wm.link(
+                filepath=os.path.join(LibPath, "Object", self.asset_name),
+                directory=os.path.join(LibPath, "Object"),
+                filename=self.asset_name,
+                do_reuse_local_id=True,
+                instance_collections=True
+                ) 
+            obj = bpy.data.objects[self.asset_name]
+            obj.make_local()
+            obj.data.make_local()
+
+        else:
+
+            bpy.ops.wm.append(
+                filepath=os.path.join(LibPath, "Object", self.asset_name),
+                directory=os.path.join(LibPath, "Object"),
+                filename=self.asset_name,
+                set_fake=True,
+                clear_asset_data=True
+                )  
 
         return {"FINISHED"}
 
