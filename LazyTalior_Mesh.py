@@ -4,6 +4,9 @@ import bpy
 import enum
 from enum import Enum
 
+
+
+
 class LT_OT_export_order_setter(bpy.types.Operator):
     
     bl_idname = "lt.export_order_setter"
@@ -264,3 +267,45 @@ class LT_OT_so_no_head(bpy.types.Operator):
         return {"FINISHED"}
     
 
+class LT_OT_xflip_mesh(bpy.types.Operator):
+    
+    #this whole thing is nasty but "if it looks stupid but works, it ain't stupid"
+    bl_idname = "lt.xflip_mesh"
+    bl_label = "X Flip Mesh"
+    bl_description = "Mirrors the active mesh on its X axis."
+
+
+    def execute(self, context):
+
+        #make sure it's all halal before we start
+        try:
+            bpy.ops.object.mode_set(mode="OBJECT")
+        except RuntimeError:
+            pass
+        
+        obj = bpy.context.view_layer.objects.active
+        
+        if obj.type == 'MESH':
+            bpy.ops.object.select_pattern(pattern=obj.name, extend=False)
+            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+
+            bpy.ops.transform.resize(value=(-1.0, 1.0, 1.0))
+            bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+            #"just flip 'em"
+            for group in obj.vertex_groups:
+                if group.name != "Dummy_Root":
+                    print(group.name)
+                    group.name = group.name.replace('_L','_X0')
+                    group.name = group.name.replace('_R','_Y0')
+
+            for group in obj.vertex_groups:
+                group.name = group.name.replace('_X0','_R')
+                group.name = group.name.replace('_Y0','_L')
+
+            bpy.ops.object.editmode_toggle()
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.flip_normals()
+            bpy.ops.object.editmode_toggle()
+
+        return {"FINISHED"}

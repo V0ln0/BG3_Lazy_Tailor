@@ -131,6 +131,8 @@ class active_check:
         
         bpy.ops.object.select_pattern(pattern=ObjName, extend=False)
 
+
+# TODO: work out how to use blender's built in error messages for operators
 def Error_Popup(pop_title: str, error_reason: str, suggestion: str):
 
     def draw(self, context):

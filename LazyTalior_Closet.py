@@ -147,7 +147,7 @@ class LT_OT_exterminatus(bpy.types.Operator):
     bl_description = "Removes all Lazy Tailor data from your file"
 
     def execute(self, context):
-
+        #TODO: make the node groups local before resetting the addon
         bpy.data.libraries.remove(bpy.data.libraries["LazyTalior_Supply_Closet.blend"])
         corpse_wagon = ("Local_Mannequin", "Local_Mannequin_Base")
         

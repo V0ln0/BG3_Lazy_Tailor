@@ -168,6 +168,7 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
 
         split_a.operator("wm.call_menu", text="Set Export Order").name = "LT_MT_export_order_menu"
         split_a.operator("lt.so_no_head", text="Create Head_M")
+        split_a.operator("lt.xflip_mesh", text="X Flip Mesh")
         split_b = mesh_split.column()
 
         split_b.operator("wm.call_menu", text="Create LODs").name = "LT_MT_create_lod_menu"
@@ -373,6 +374,7 @@ classes = (
     LT_OT_set_preset_info,
     LT_PT_edit_preset_info_panel,
     LT_PT_debug_panel,
+    LT_OT_xflip_mesh,
 
     )
 

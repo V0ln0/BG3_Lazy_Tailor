@@ -154,4 +154,3 @@ class lt_user_props(bpy.types.PropertyGroup):
         default="My Cool Pre-set :)",
         maxlen=128,
         )
-
