@@ -42,8 +42,14 @@ class LT_PT_tailor_AddonPreferences(bpy.types.AddonPreferences):
         description="Location of a Blend file that you wish to store custom pre-sets in."
     )
 
+    util_toggle: bpy.props.BoolProperty(
+        name="Always Show Utility tools",
+        default=False,
+        description="Enabling this will make the addon's Utility menu visable even when the main addon is not initialised. "
+    )
+
     volno_debug: bpy.props.BoolProperty(
-        name="Volno's debug Tools",
+        name="Volno's Debug Tools",
         default=False,
         description="Enables debuging tools, HANDS OFF UNLESS YOU KNOW WHAT YOU'RE DOING"
     )
@@ -53,7 +59,9 @@ class LT_PT_tailor_AddonPreferences(bpy.types.AddonPreferences):
         layout = self.layout
         layout.label(text="BG3 Lazy Tailor AddonPreferences")
         layout.prop(self, "user_lib_path")
+        layout.prop(self, "util_toggle")
         layout.prop(self, "volno_debug")
+
 
 
 class LT_scene_master_panel():
@@ -154,7 +162,7 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        return bool(context.scene.lt_util_props.InitBool)
+        return bool(context.scene.lt_util_props.InitBool == True or bpy.context.preferences.addons[__package__].preferences.util_toggle == True)
     
     def draw(self, context):
         lt_util_props = bpy.context.scene.lt_util_props
@@ -195,14 +203,15 @@ class LT_PT_utility_panel(LT_scene_master_panel, bpy.types.Panel):
         
         split_b = split.column()
         split_b.operator("lt.asset_dropper", text="Append").asset_name= lt_util_props.ref_bodies
-
-        layout.separator(type='LINE')
-        layout.label(text="Danger Zone:")
-        check_start =  layout.operator("lt.confirm_choice", text="Restart Lazy Tailor")
-        check_start.the_thing = "restart Lazy Tailor"
-        check_start.op_name = "lt.exterminatus"
-        check_start.warn_extra = True
-        check_start.warn_message = "WARNING: this will PURGE all Lazy Tailor data from the current file. Does not remove user pre-sets"
+        
+        if bpy.context.scene.lt_util_props.InitBool:
+            layout.separator(type='LINE')
+            layout.label(text="Danger Zone:")
+            check_start =  layout.operator("lt.confirm_choice", text="Restart Lazy Tailor")
+            check_start.the_thing = "restart Lazy Tailor"
+            check_start.op_name = "lt.exterminatus"
+            check_start.warn_extra = True
+            check_start.warn_message = "WARNING: this will PURGE all Lazy Tailor data from the current file. Does not remove user pre-sets"
 
 class LT_PT_debug_panel(LT_scene_master_panel, bpy.types.Panel):
     

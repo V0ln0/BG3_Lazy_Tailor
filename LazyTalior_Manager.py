@@ -31,8 +31,11 @@ HOW THIS WORKS: MANNEQUINS ARE LIKE ONIONS
 #step by step:
 # clear all user transfroms -> deselect all other objects -> make LM avtive obj -> swap LMB(ARM) data -> set inverse on all "child of" constraints in LM -> apply action preset
 # class contains functions needed to control the swapping of presets/armatures
+
+
 class BodyShop:
     #TODO: ask Nav about cleaning this up
+
 
     def __init__(self, from_Arm='LT_Mannequin_Base', to_Arm='LT_Mannequin_Base', LMB='Local_Mannequin_Base', LM='Local_Mannequin'):
 
@@ -42,6 +45,7 @@ class BodyShop:
         self.LMB_A = bpy.data.armatures[LMB]
         self.LM = bpy.data.objects[LM]
         self.LM_A = bpy.data.armatures[LM]
+    
     
     # upon swapping armature data, the 'childof' constraints need to have their inverse set again, lest you wish to see some sort of demonic gibon
     def child_of_mass_invert(self):

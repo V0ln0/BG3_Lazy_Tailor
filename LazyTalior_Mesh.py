@@ -5,8 +5,6 @@ import enum
 from enum import Enum
 
 
-
-
 class LT_OT_export_order_setter(bpy.types.Operator):
     
     bl_idname = "lt.export_order_setter"
@@ -39,7 +37,6 @@ class LT_OT_export_order_setter(bpy.types.Operator):
         
         return {"FINISHED"}
 
-
 class LT_MT_export_order_menu(bpy.types.Menu):
     
     bl_idname = "LT_MT_export_order_menu"
@@ -59,6 +56,7 @@ def LT_select_children(Parent):
         O.select_set(True)
     bpy.context.view_layer.objects.active = offspring[0]
     return offspring
+
 
 class LT_OT_mass_apply_modifier(bpy.types.Operator):
     
@@ -105,13 +103,15 @@ class LT_MT_mass_apply_menu(bpy.types.Menu):
     bl_label = "Appy Changes On..."
 
     def draw(self, context):
-        layout = self.layout
+        
+        self.layout.operator("lt.mass_apply_modifier", text="Mannequin Children")
+        self.layout.operator("lt.mass_apply_modifier", text="Selected Objects").for_selected = True
 
-        layout.operator("lt.mass_apply_modifier", text="Mannequin Children")
-        layout.operator("lt.mass_apply_modifier", text="Selected Objects").for_selected = True
 
-class lod_codebook():
-    
+
+#stores and organises LOD values to be used by LOD_factory
+class LOD_codebook():
+
     LOD_def = Enum('LOD_def', [('LOD0', 0), ('LOD1', 1), ('LOD2', 2), ('LOD3', 3), ('LOD4', 4), ('CLEAR', 5)])
 
     LOD_dict = {
@@ -125,78 +125,59 @@ class lod_codebook():
         "CLEAR": (0, 0, 0),
     }
 
-    def get_LOD(self, LOD_value):
-       
-       return self.LOD_dict[self.LOD_def(LOD_value).name]
+    def get_LOD(self, LOD_value=int):
+    
+        return self.LOD_dict[self.LOD_def(LOD_value).name]
 
+    def set_LOD(self, OBJ, level=int, set_decimate=False):
+        LOD_L = self.get_LOD(level)
+        OBJ.data.ls_properties.lod = LOD_L[0]
+        OBJ.data.ls_properties.lod_distance = LOD_L[1]
+        if set_decimate:
+            deci_mod = OBJ.modifiers.new(self.LOD_def(level).name, 'DECIMATE')
+            deci_mod.ratio = LOD_L[2]
+
+# reworked to eventauly allow for the multiple LODS at once.
+# OBJ should be the original mesh or LOD0 from which new LODs are created
+# this way we can loop over the same variable to create multiple LODS
+class LOD_factory(LOD_codebook):
+
+    def __init__(self, OBJ):
+        self.OBJ = OBJ
+    
+    def create_LOD(self, level=int, decimate=bool):
+        LOD_info = LOD_codebook.LOD_def(level)
+        
+        newLODname = self.OBJ.name + "_" + LOD_info.name
+        newLODdata = self.OBJ.data.copy()
+        newLOD = bpy.data.objects.new(newLODname, newLODdata)
+        newLOD.data.name = newLODname
+        self.set_LOD(newLOD, level, decimate)
+
+        if self.OBJ.parent:
+            newLOD.parent = self.OBJ.parent
+            self.OBJ.parent.users_collection[0].objects.link(newLOD)
+        else:
+            bpy.context.scene.collection.objects.link(newLOD)
+
+        return newLOD
 
 class LT_OT_create_lod(bpy.types.Operator):
-    # "Let's go. In and out. 20 minute operator" this was h e l l
+
     bl_idname = "lt.create_lod"
     bl_label = "create LOD"
     bl_description = "Creates or sets the LOD of a selected mesh"
 
-    level_int: bpy.props.IntProperty(
-        name="level_int",
-        default=0,
-        min=0,
-        max=5,
-    )
-    new_mesh: bpy.props.BoolProperty(
-        name="new_mesh",
-        default=True
-    ) #sets the LOD level and distance without creating a new mesh 
+    level_int: bpy.props.IntProperty(default=1) 
+    needs_decimate: bpy.props.BoolProperty(default=True)
 
-
-    def set_LOD(self, obj, level, distance):
-        
-        obj.data.ls_properties.lod = level
-        obj.data.ls_properties.lod_distance = distance
-
-    def create_LOD(self, obj):
-        
-        LOD_name = lod_codebook.LOD_def(self.level_int).name
-        
-        newLODname = obj.name + "_" + LOD_name
-        newLODdata = obj.data.copy()
-        newLOD = bpy.data.objects.new(newLODname, newLODdata)
-        newLOD.data.name = newLODname
-
-        if obj.parent:
-            newLOD.parent = obj.parent
-            obj.parent.users_collection[0].objects.link(newLOD)
-        else:
-            bpy.context.scene.collection.objects.link(newLOD)
-        
-        bpy.context.view_layer.objects.active = newLOD
-        
-        return newLOD
-
-    
     def execute(self, context):
         
-        active_obj = bpy.context.view_layer.objects.active
-        
-        if active_obj.type == 'MESH':
-            LOD = lod_codebook().get_LOD(LOD_value=self.level_int)
-            
-            if self.level_int in tuple((0, 5)):
-                self.set_LOD(active_obj, LOD[0], LOD[1])
-                #LOD0 never needs to create a new mesh, be decimated, or renamed. The same is true for clearing the LOD values
-            else:               
-                if self.new_mesh == False:
-                    self.set_LOD(active_obj, LOD[0], LOD[1])
-                    bpy.ops.object.modifier_add(type='DECIMATE')
-                    active_obj.modifiers["Decimate"].ratio = LOD[2]
-                else:
-                    created_LOD = self.create_LOD(active_obj)
-                    self.set_LOD(created_LOD, LOD[0], LOD[1])
-                    bpy.ops.object.modifier_add(type='DECIMATE')
-                    created_LOD.modifiers["Decimate"].ratio = LOD[2]
-                    bpy.context.view_layer.objects.active = active_obj
+        active_obj = LOD_factory(OBJ= bpy.context.view_layer.objects.active)
+        active_obj.create_LOD(self.level_int, self.needs_decimate)
 
         return {"FINISHED"}
-
+    
 class LT_MT_create_lod_menu(bpy.types.Menu):
         
     bl_idname = "LT_MT_create_lod_menu"
@@ -252,6 +233,7 @@ class LT_OT_so_no_head(bpy.types.Operator):
             Head_M = bpy.context.active_object.vertex_groups["Head_M"]
             return Head_M
         except KeyError:
+            # no head :(
             Head_M = bpy.context.active_object.vertex_groups.new(name='Head_M')
             return Head_M
 
@@ -273,7 +255,6 @@ class LT_OT_xflip_mesh(bpy.types.Operator):
     bl_idname = "lt.xflip_mesh"
     bl_label = "X Flip Mesh"
     bl_description = "Mirrors the active mesh on its X axis."
-
 
     def execute(self, context):
 
