@@ -44,8 +44,9 @@ class LT_MT_export_order_menu(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-
-        layout.operator("lt.export_order_setter", text="Mannequin Children").selected = False
+        
+        if bpy.context.scene.lt_util_props.InitBool == True:
+            layout.operator("lt.export_order_setter", text="Mannequin Children").selected = False
         layout.operator("lt.export_order_setter", text="Selected Objects").selected = True
 
 def LT_select_children(Parent):
@@ -166,18 +167,36 @@ class LT_OT_create_lod(bpy.types.Operator):
 
     bl_idname = "lt.create_lod"
     bl_label = "create LOD"
-    bl_description = "Creates or sets the LOD of a selected mesh"
+    bl_description = "Creates a LOD of a selected mesh"
 
     level_int: bpy.props.IntProperty(default=1) 
     needs_decimate: bpy.props.BoolProperty(default=True)
 
     def execute(self, context):
         
-        active_obj = LOD_factory(OBJ= bpy.context.view_layer.objects.active)
-        active_obj.create_LOD(self.level_int, self.needs_decimate)
+        if bpy.context.active_object.type == 'MESH':
+            active_obj = LOD_factory(OBJ= bpy.context.view_layer.objects.active)
+            active_obj.create_LOD(self.level_int, self.needs_decimate)
 
         return {"FINISHED"}
-    
+
+
+class LT_OT_set_lod(bpy.types.Operator):
+
+    bl_idname = "lt.set_lod"
+    bl_label = "set LOD"
+    bl_description = "Sets the LOD of a selected mesh"
+
+    level_int: bpy.props.IntProperty(default=1)
+
+    def execute(self, context):
+        active_obj = bpy.context.view_layer.objects.active
+        if bpy.context.active_object.type == 'MESH':
+            LOD_codebook().set_LOD(active_obj, self.level_int)
+
+        return {"FINISHED"}
+
+
 class LT_MT_create_lod_menu(bpy.types.Menu):
         
     bl_idname = "LT_MT_create_lod_menu"
@@ -200,25 +219,12 @@ class LT_MT_set_lod_menu(bpy.types.Menu):
         
         layout = self.layout
 
-        layout.operator('lt.create_lod', text="LOD0").level_int = 0
-        
-        props = layout.operator('lt.create_lod', text="LOD1")
-        props.level_int = 1
-        props.new_mesh = False
-
-        props = layout.operator('lt.create_lod', text="LOD2")
-        props.level_int = 2
-        props.new_mesh = False
-        
-        props = layout.operator('lt.create_lod', text="LOD3")
-        props.level_int = 3
-        props.new_mesh = False
-
-        props = layout.operator('lt.create_lod', text="LOD4")
-        props.level_int = 4
-        props.new_mesh = False
-        
-        layout.operator('lt.create_lod', text="Reset LOD").level_int = 5
+        layout.operator('lt.set_lod', text="LOD0").level_int = 0
+        layout.operator('lt.set_lod', text="LOD1").level_int = 1
+        layout.operator('lt.set_lod', text="LOD2").level_int = 2
+        layout.operator('lt.set_lod', text="LOD3").level_int = 3
+        layout.operator('lt.set_lod', text="LOD4").level_int = 4
+        layout.operator('lt.set_lod', text="Reset LOD").level_int = 5
 
 #this might be come redundent later
 class LT_OT_so_no_head(bpy.types.Operator):

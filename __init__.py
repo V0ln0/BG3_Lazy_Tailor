@@ -368,6 +368,7 @@ classes = (
     LT_MT_mass_apply_menu,
     LT_MT_export_order_menu,
     LT_OT_create_lod,
+    LT_OT_set_lod,
     LT_MT_create_lod_menu,
     LT_MT_set_lod_menu,
     LT_OT_so_no_head,
@@ -384,7 +385,7 @@ classes = (
     LT_PT_edit_preset_info_panel,
     LT_PT_debug_panel,
     LT_OT_xflip_mesh,
-
+    
     )
 
 
