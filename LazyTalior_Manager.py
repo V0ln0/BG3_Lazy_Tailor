@@ -46,27 +46,24 @@ class BodyShop:
         self.LM = bpy.data.objects[LM]
         self.LM_A = bpy.data.armatures[LM]
     
-    
+
     # upon swapping armature data, the 'childof' constraints need to have their inverse set again, lest you wish to see some sort of demonic gibon
     def child_of_mass_invert(self):
 
-        for b in self.LM.pose.bones:
-            for c in b.constraints:
-                if c.type == "CHILD_OF":
-                    context_py = bpy.context.copy()
-                    context_py["constraint"] = c
-                    self.LM.data.bones.active = b.bone                               
-                    bpy.ops.constraint.childof_set_inverse(constraint="Child Of", owner="BONE")
-    
+        for b in self.LM_A.collections["Deform_Bones"].children["Child_Of_Bones"].bones:
+            self.LM_A.bones.active = self.LM.pose.bones[b.name].bone
+            context_py = bpy.context.copy()
+            context_py["constraint"] = self.LM.pose.bones[b.name].constraints["Child Of"]
+            bpy.ops.constraint.childof_set_inverse(constraint="Child Of", owner="BONE")
+
+
     def stretch_to_mass_set(self): #NOTE: 99% sure that this is not actualy needed, but I'm keeping it as it was usefull as a debugging tool.
 
-        for b in self.LM.pose.bones:
-            for c in b.constraints:
-                if c.type == "STRETCH_TO":
-                    context_py = bpy.context.copy()
-                    context_py["constraint"] = c
-                    self.LM.data.bones.active = b.bone                               
-                    bpy.ops.constraint.stretchto_reset(constraint="Stretch To", owner='BONE')
+        for b in self.LM_A.collections["Deform_Bones"].children["Child_Of_Bones"].bones:
+            self.LM_A.bones.active = self.LM.pose.bones[b.name].bone
+            context_py = bpy.context.copy()
+            context_py["constraint"] = self.LM.pose.bones[b.name].constraints["Stretch To"]                          
+            bpy.ops.constraint.stretchto_reset(constraint="Stretch To", owner='BONE')
 
     # can't effect constraints on bones that are not visable in the viewport
     def BoneVis_Validator(self, stretch_To=False):
